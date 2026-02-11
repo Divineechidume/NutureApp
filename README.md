@@ -21,16 +21,17 @@ Principles: single responsibility per service, dependency injection into control
 
 ## How to Navigate the Codebase
 
-| Area                      | Location                                                                     | What you’ll find                                              |
-| ------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **App entry & root flow** | `App/NurtureApp.swift`, `Views/RootView.swift`                               | Onboarding vs main tab decision; demo mode.                   |
-| **Current status (Home)** | `Views/Home/HomeView.swift`, `Controllers/HomeController.swift`              | Asleep/awake, duration, last night, naps, nap prediction.     |
-| **History**               | `Views/History/HistoryView.swift`, `Controllers/HistoryController.swift`     | Past 7 days, expandable list, nighttime vs naps.              |
-| **Onboarding**            | `Views/Onboarding/`, `Controllers/OnboardingController.swift`                | Welcome → Permissions → Pair Device → Quick Tour.             |
-| **Settings**              | `Views/Settings/SettingsView.swift`, `Controllers/SettingsController.swift`  | Profile, device, notifications, account.                      |
-| **Bluetooth & alerts**    | `Services/BluetoothService.swift`, `Services/NotificationService.swift`      | Pairing, real-time data, rollover and connection-lost alerts. |
-| **Sleep & ML**            | `Services/SleepDetectionService.swift`, `Services/MLPredictionService.swift` | Sleep/wake from BLE data; nap prediction (age-based then ML). |
-| **Design**                | `Utilities/DesignTokens.swift`, `Utilities/Constants.swift`                  | Colors, typography, spacing; wake windows, demo flag.         |
+| Area                        | Location                                                                     | What you’ll find                                                             |
+| --------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **App entry & root flow**   | `App/NurtureApp.swift`, `Views/RootView.swift`                               | Onboarding vs main tab decision; demo mode.                                  |
+| **Current status (Home)**   | `Views/Home/HomeView.swift`, `Controllers/HomeController.swift`              | Asleep/awake, duration, last night, naps, nap prediction.                    |
+| **History**                 | `Views/History/HistoryView.swift`, `Controllers/HistoryController.swift`     | Past 7 days, expandable list, nighttime vs naps.                             |
+| **Onboarding**              | `Views/Onboarding/`, `Controllers/OnboardingController.swift`                | Welcome → Permissions → Pair Device → Quick Tour.                            |
+| **Settings**                | `Views/Settings/SettingsView.swift`, `Controllers/SettingsController.swift`  | Profile, device, notifications, account.                                     |
+| **Bluetooth & alerts**      | `Services/BluetoothService.swift`, `Services/NotificationService.swift`      | Pairing, real-time data, rollover and connection-lost alerts.                |
+| **Rollover alert (Safety)** | `Views/RolloverAlertView.swift`, `RolloverAlertState`                        | Full-screen “Check on [Child]” and “I’ve Checked”; demo trigger in Settings. |
+| **Sleep & ML**              | `Services/SleepDetectionService.swift`, `Services/MLPredictionService.swift` | Sleep/wake from BLE data; nap prediction (age-based then ML).                |
+| **Design**                  | `Utilities/DesignTokens.swift`, `Utilities/Constants.swift`                  | Colors, typography, spacing; wake windows, demo flag.                        |
 
 ---
 
@@ -72,6 +73,14 @@ Suggested order:
 2. Select an iOS Simulator (e.g. iPhone 15) and run (⌘R).
 3. **Demo mode** is on by default: the app skips onboarding and shows mock data (child “Emma”, “Asleep 2h 15m”, 3 days of history). Bluetooth is stubbed.
 4. To test onboarding again: open **Settings** tab → **Demo** → **Reset onboarding**, then relaunch.
+
+**Demo scope (upcoming demo):** The app is set up so the key demo features are:
+
+- **Device Pairing & Setup** — Bluetooth stack is in place; for the demo, use **"Use already paired device (demo)"** on the Pair Device screen (when in demo mode) so the device is treated as already paired. Real scan/connect can be used when testing with hardware.
+- **Home Screen** — Current status card (Asleep/Awake, duration, last night, today’s naps) with mock data; design matches PRD (sage when asleep, cream when awake).
+- **Safety Alerts** — Full-screen rollover alert (peach/coral, “Check on [Child]”, “I’ve Checked”) and local notification. In **Settings → Demo**, tap **Simulate rollover** to trigger the alert and notification without hardware.
+
+Everything else (History, Settings content, Nap prediction, etc.) is mocked for the demo.
 
 ---
 

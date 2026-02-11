@@ -28,8 +28,16 @@ final class NotificationService: ObservableObject {
     // Estimated complexity: Medium
 
     /// Integration point: Called from BluetoothService or controller when rollover signal received.
+    /// Schedules a local notification; for demo also trigger in-app alert from caller.
     func sendRolloverAlert(childName: String, rolloverTime: Date) {
-        // TODO: Schedule local notification with childName and time
+        let content = UNMutableNotificationContent()
+        content.title = "Rollover"
+        content.body = "⚠️ \(childName) has rolled over"
+        content.sound = .default
+        content.categoryIdentifier = "ROLLOVER_ALERT"
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request) { _ in }
     }
 
     // TODO: Implement connection lost notification

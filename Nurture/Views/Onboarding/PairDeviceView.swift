@@ -50,6 +50,18 @@ struct PairDeviceView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    if useDemoMode {
+                        Button("Use already paired device (demo)") {
+                            // Demo path: assume device is already paired; skip real BLE and go to completion.
+                            onContinue()
+                        }
+                        .font(DesignTokens.bodyFont(size: 17))
+                        .foregroundColor(DesignTokens.sageGreen)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, DesignTokens.spacingMD)
+                        .overlay(RoundedRectangle(cornerRadius: DesignTokens.buttonCornerRadius).stroke(DesignTokens.sageGreen, lineWidth: 2))
+                        .padding(.top, DesignTokens.spacingSM)
+                    }
                     Button("Complete Setup") {
                         onContinue()
                     }

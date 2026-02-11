@@ -35,6 +35,7 @@
 		A1000000000000000000001A /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001A /* DesignTokens.swift */; };
 		A1000000000000000000001B /* Date+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* Date+Formatting.swift */; };
 		A1000000000000000000001C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* Assets.xcassets */; };
+		A1000000000000000000001D /* RolloverAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* RolloverAlertView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +68,7 @@
 		A2000000000000000000001A /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		A2000000000000000000001B /* Date+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Formatting.swift"; sourceTree = "<group>"; };
 		A2000000000000000000001C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2000000000000000000001D /* RolloverAlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RolloverAlertView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +137,7 @@
 			children = (
 				A20000000000000000000007 /* RootView.swift */,
 				A20000000000000000000008 /* MainTabView.swift */,
+				A2000000000000000000001D /* RolloverAlertView.swift */,
 				A4000000000000000000000A /* Onboarding */,
 				A4000000000000000000000B /* Home */,
 				A4000000000000000000000C /* History */,
@@ -318,6 +321,7 @@
 				A10000000000000000000019 /* Constants.swift in Sources */,
 				A1000000000000000000001A /* DesignTokens.swift in Sources */,
 				A1000000000000000000001B /* Date+Formatting.swift in Sources */,
+				A1000000000000000000001D /* RolloverAlertView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

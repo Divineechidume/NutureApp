@@ -3,6 +3,7 @@
 //  Nurture
 //
 //  Settings menu: Child Profile, Device, Notifications, Account, Support, App Info. PRD Section 6.
+//  Demo: "Simulate rollover" triggers Safety Alerts flow for demo.
 //
 
 import SwiftUI
@@ -10,6 +11,8 @@ import SwiftUI
 /// Settings sections per PRD: Child Profile, Device Management, Notifications, Account, Support & Legal, App Info.
 struct SettingsView: View {
     @ObservedObject var controller: SettingsController
+    @ObservedObject var rolloverAlertState: RolloverAlertState
+    @ObservedObject var notificationService: NotificationService
 
     var body: some View {
         NavigationStack {
@@ -53,6 +56,12 @@ struct SettingsView: View {
                     }
                     if useDemoMode {
                         Section("Demo") {
+                            Button("Simulate rollover") {
+                                let name = controller.child?.name ?? mockChildName
+                                let time = Date()
+                                rolloverAlertState.presentRollover(childName: name, time: time)
+                                notificationService.sendRolloverAlert(childName: name, rolloverTime: time)
+                            }
                             Text("Reset onboarding")
                                 .onTapGesture {
                                     UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
