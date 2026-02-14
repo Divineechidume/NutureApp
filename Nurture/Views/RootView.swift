@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-/// Decides whether to show onboarding flow or main tab view. In demo mode, can auto-complete onboarding.
+/// Decides whether to show onboarding flow or main tab view. Demo mode runs full onboarding (Welcome, Permissions, Pair Device, Quick Tour).
 /// Holds app-level rollover alert state and presents RolloverAlertView over the main content when active.
 struct RootView: View {
     @Binding var hasCompletedOnboarding: Bool
@@ -30,12 +30,6 @@ struct RootView: View {
                     rolloverTime: rollover.time,
                     onDismiss: { rolloverAlertState.dismiss() }
                 )
-            }
-        }
-        .onAppear {
-            if useDemoMode {
-                // Option A: Land on Home with mock data without going through onboarding
-                hasCompletedOnboarding = true
             }
         }
     }

@@ -28,6 +28,7 @@ struct MainTabView: View {
                 }
             SettingsView(
                 controller: settingsController,
+                homeController: homeController,
                 rolloverAlertState: rolloverAlertState,
                 notificationService: notificationService
             )

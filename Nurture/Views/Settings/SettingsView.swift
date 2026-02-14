@@ -11,6 +11,7 @@ import SwiftUI
 /// Settings sections per PRD: Child Profile, Device Management, Notifications, Account, Support & Legal, App Info.
 struct SettingsView: View {
     @ObservedObject var controller: SettingsController
+    @ObservedObject var homeController: HomeController
     @ObservedObject var rolloverAlertState: RolloverAlertState
     @ObservedObject var notificationService: NotificationService
 
@@ -80,6 +81,10 @@ struct SettingsView: View {
                     }
                     if useDemoMode {
                         Section("Demo") {
+                            Toggle("Show awake state", isOn: Binding(
+                                get: { homeController.demoShowAwake },
+                                set: { homeController.setDemoAwake($0) }
+                            ))
                             Button("Simulate rollover") {
                                 let name = controller.child?.name ?? mockChildName
                                 let time = Date()

@@ -71,12 +71,12 @@ Suggested order:
 
 1. Open `Nurture.xcodeproj` in Xcode (from the repo root).
 2. Select an iOS Simulator (e.g. iPhone 15) and run (⌘R).
-3. **Demo mode** is on by default: the app skips onboarding and shows mock data (child “Emma”, “Asleep 2h 15m”, 3 days of history). Bluetooth is stubbed.
+3. **Demo mode** is on by default: the app shows the full onboarding flow (Welcome, Permissions, Pair Device, Quick Tour), then Home with mock data (child “Emma”, “Asleep 2h 15m”, 3 days of history). Bluetooth is stubbed.
 4. To test onboarding again: open **Settings** tab → **Demo** → **Reset onboarding**, then relaunch.
 
 **Demo scope (upcoming demo):** The app is set up so the key demo features are:
 
-- **Device Pairing & Setup** — Bluetooth stack is in place; for the demo, use **"Use already paired device (demo)"** on the Pair Device screen (when in demo mode) so the device is treated as already paired. Real scan/connect can be used when testing with hardware.
+- **Device Pairing & Setup** — Demo runs the full intro flow. On the Pair Device screen, tap **"Use already paired device (demo)"** to skip real BLE scanning and continue to Quick Tour and Home. Real scan/connect can be used when testing with hardware.
 - **Home Screen** — Current status card (Asleep/Awake, duration, last night, today’s naps) with mock data; design matches PRD (sage when asleep, cream when awake).
 - **Safety Alerts** — Full-screen rollover alert (peach/coral, “Check on [Child]”, “I’ve Checked”) and local notification. In **Settings → Demo**, tap **Simulate rollover** to trigger the alert and notification without hardware.
 

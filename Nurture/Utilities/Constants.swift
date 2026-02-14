@@ -56,6 +56,17 @@ enum AgeRange: String, CaseIterable, Identifiable {
         case .twoToThreeYears: return "2-3 years"
         }
     }
+
+    /// Returns age range from birthdate. PRD: 0-6mo, 6-12mo, 1-2yr, 2-3yr.
+    static func from(birthdate: Date) -> AgeRange {
+        let months = Calendar.current.dateComponents([.month], from: birthdate, to: Date()).month ?? 0
+        switch months {
+        case 0..<6: return .zeroToSixMonths
+        case 6..<12: return .sixToTwelveMonths
+        case 12..<24: return .oneToTwoYears
+        default: return .twoToThreeYears
+        }
+    }
 }
 
 // MARK: - Safety Alerts (PRD Section 4)

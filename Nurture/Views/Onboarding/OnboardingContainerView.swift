@@ -26,8 +26,17 @@ struct OnboardingContainerView: View {
                 )
             case .quickTour:
                 QuickTourView(
-                    onStart: { hasCompletedOnboarding = true },
-                    onSkip: { controller.skipTour(); hasCompletedOnboarding = true }
+                    onStart: {
+                        let child = controller.buildChildProfile()
+                        ChildProfileStore.save(child)
+                        hasCompletedOnboarding = true
+                    },
+                    onSkip: {
+                        controller.skipTour()
+                        let child = controller.buildChildProfile()
+                        ChildProfileStore.save(child)
+                        hasCompletedOnboarding = true
+                    }
                 )
             }
         }

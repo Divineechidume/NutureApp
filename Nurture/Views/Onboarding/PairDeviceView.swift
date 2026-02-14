@@ -24,9 +24,25 @@ struct PairDeviceView: View {
                     Text("Turn on your wearable. We'll detect it via Bluetooth.")
                         .font(DesignTokens.bodyFont())
                         .foregroundColor(DesignTokens.textSecondary)
+                    Button("Pair Device") {
+                        controller.startPairing()
+                    }
+                    .font(DesignTokens.bodyFont(size: 17))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, DesignTokens.spacingMD)
+                    .background(DesignTokens.sageGreen)
+                    .cornerRadius(DesignTokens.buttonCornerRadius)
+                    .disabled(controller.isPairing)
                     // TODO: Show list if multiple devices; handle pairing timeout and retry. PRD Section 1 edge cases.
                     if controller.isPairing {
-                        ProgressView().padding()
+                        HStack {
+                            ProgressView()
+                            Text("Searching for device…")
+                                .font(DesignTokens.captionFont())
+                                .foregroundColor(DesignTokens.textSecondary)
+                        }
+                        .padding()
                     }
                     if let error = controller.pairingError {
                         Text(error).font(DesignTokens.captionFont()).foregroundColor(DesignTokens.peachCoral)
@@ -44,12 +60,9 @@ struct PairDeviceView: View {
                     Text("Age range")
                         .font(DesignTokens.captionFont())
                         .foregroundColor(DesignTokens.textSecondary)
-                    Picker("Age range", selection: $controller.childAgeRange) {
-                        ForEach(AgeRange.allCases) { range in
-                            Text(range.displayName).tag(range)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                    Text(AgeRange.from(birthdate: controller.childBirthdate).displayName + " (from birthdate)")
+                        .font(DesignTokens.bodyFont())
+                        .foregroundColor(DesignTokens.textPrimary)
                     if useDemoMode {
                         Button("Use already paired device (demo)") {
                             // Demo path: assume device is already paired; skip real BLE and go to completion.

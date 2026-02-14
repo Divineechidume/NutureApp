@@ -25,6 +25,10 @@ struct WelcomeView: View {
                     .font(DesignTokens.bodyFont())
                     .foregroundColor(DesignTokens.textSecondary)
                     .multilineTextAlignment(.center)
+                Text("A calm companion for your baby's sleep")
+                    .font(DesignTokens.bodyFont())
+                    .foregroundColor(DesignTokens.textSecondary)
+                    .multilineTextAlignment(.center)
                 Spacer()
                 Button("Get Started") {
                     onContinue()

@@ -21,8 +21,13 @@ final class SettingsController: ObservableObject {
     // Estimated complexity: Low
 
     init() {
+        if let savedChild = ChildProfileStore.load() {
+            child = savedChild
+        } else if useDemoMode {
+            let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
+            child = Child(name: mockChildName, birthdate: birthdate, ageRange: AgeRange.from(birthdate: birthdate))
+        }
         if useDemoMode {
-            child = Child(name: mockChildName, birthdate: Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date(), ageRange: .sixToTwelveMonths)
             device = WearableDevice(name: "Nurture Ankle", batteryLevel: 85, firmwareVersion: "1.0.0", isConnected: true)
         }
     }

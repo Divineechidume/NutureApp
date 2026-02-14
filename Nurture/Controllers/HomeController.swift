@@ -21,6 +21,7 @@ final class HomeController: ObservableObject {
     @Published var napPrediction: NapPrediction?
     @Published var child: Child?
     @Published var lastUpdated: Date = Date()
+    @Published var demoShowAwake: Bool = false
 
     // MARK: - Dependencies
 
@@ -79,9 +80,19 @@ final class HomeController: ObservableObject {
         // TODO: Pull latest from BluetoothService / cache. PRD Section 2 - pull-to-refresh.
     }
 
+    func setDemoAwake(_ awake: Bool) {
+        demoShowAwake = awake
+        isAsleep = !awake
+    }
+
     private func loadMockData() {
-        child = Child(name: mockChildName, birthdate: Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date(), ageRange: .sixToTwelveMonths)
-        isAsleep = true
+        if let savedChild = ChildProfileStore.load() {
+            child = savedChild
+        } else {
+            let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
+            child = Child(name: mockChildName, birthdate: birthdate, ageRange: AgeRange.from(birthdate: birthdate))
+        }
+        isAsleep = !demoShowAwake
         var components = DateComponents()
         components.hour = -2
         components.minute = -15
