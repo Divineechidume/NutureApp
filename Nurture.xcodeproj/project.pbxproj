@@ -11,7 +11,10 @@
 		A10000000000000000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* AppDelegate.swift */; };
 		A10000000000000000000003 /* Child.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* Child.swift */; };
 		A10000000000000000000004 /* SleepSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* SleepSession.swift */; };
-		A10000000000000000000005 /* WearableDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* WearableDevice.swift */; };
+		A10000000000000000000005 /* NurtureBand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* NurtureBand.swift */; };
+		A1000000000000000000001F /* Household.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* Household.swift */; };
+		A10000000000000000000020 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* Member.swift */; };
+		A10000000000000000000021 /* NotificationPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000021 /* NotificationPreferences.swift */; };
 		A10000000000000000000006 /* NapPrediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* NapPrediction.swift */; };
 		A10000000000000000000007 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* RootView.swift */; };
 		A10000000000000000000008 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* MainTabView.swift */; };
@@ -37,6 +40,10 @@
 		A1000000000000000000001C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* Assets.xcassets */; };
 		A1000000000000000000001D /* RolloverAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* RolloverAlertView.swift */; };
 		A1000000000000000000001E /* ChildProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* ChildProfileStore.swift */; };
+		A10000000000000000000022 /* SecureStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000022 /* SecureStorage.swift */; };
+		A10000000000000000000023 /* HouseholdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000023 /* HouseholdService.swift */; };
+		A10000000000000000000024 /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000024 /* SyncCoordinator.swift */; };
+		A10000000000000000000025 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* ServiceProtocols.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,7 +52,10 @@
 		A20000000000000000000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* Child.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Child.swift; sourceTree = "<group>"; };
 		A20000000000000000000004 /* SleepSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepSession.swift; sourceTree = "<group>"; };
-		A20000000000000000000005 /* WearableDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WearableDevice.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* NurtureBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NurtureBand.swift; sourceTree = "<group>"; };
+		A2000000000000000000001F /* Household.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Household.swift; sourceTree = "<group>"; };
+		A20000000000000000000020 /* Member.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Member.swift; sourceTree = "<group>"; };
+		A20000000000000000000021 /* NotificationPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPreferences.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* NapPrediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NapPrediction.swift; sourceTree = "<group>"; };
 		A20000000000000000000007 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A20000000000000000000008 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -71,6 +81,10 @@
 		A2000000000000000000001C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000000000000000000001D /* RolloverAlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RolloverAlertView.swift; sourceTree = "<group>"; };
 		A2000000000000000000001E /* ChildProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildProfileStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000022 /* SecureStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureStorage.swift; sourceTree = "<group>"; };
+		A20000000000000000000023 /* HouseholdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdService.swift; sourceTree = "<group>"; };
+		A20000000000000000000024 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
+		A20000000000000000000025 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,8 +141,11 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000003 /* Child.swift */,
+				A2000000000000000000001F /* Household.swift */,
+				A20000000000000000000020 /* Member.swift */,
+				A20000000000000000000021 /* NotificationPreferences.swift */,
+				A20000000000000000000005 /* NurtureBand.swift */,
 				A20000000000000000000004 /* SleepSession.swift */,
-				A20000000000000000000005 /* WearableDevice.swift */,
 				A20000000000000000000006 /* NapPrediction.swift */,
 			);
 			path = Models;
@@ -166,6 +183,10 @@
 				A20000000000000000000016 /* SleepDetectionService.swift */,
 				A20000000000000000000017 /* NotificationService.swift */,
 				A20000000000000000000018 /* MLPredictionService.swift */,
+				A20000000000000000000022 /* SecureStorage.swift */,
+				A20000000000000000000023 /* HouseholdService.swift */,
+				A20000000000000000000024 /* SyncCoordinator.swift */,
+				A20000000000000000000025 /* ServiceProtocols.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -301,7 +322,10 @@
 				A10000000000000000000002 /* AppDelegate.swift in Sources */,
 				A10000000000000000000003 /* Child.swift in Sources */,
 				A10000000000000000000004 /* SleepSession.swift in Sources */,
-				A10000000000000000000005 /* WearableDevice.swift in Sources */,
+				A10000000000000000000005 /* NurtureBand.swift in Sources */,
+				A1000000000000000000001F /* Household.swift in Sources */,
+				A10000000000000000000020 /* Member.swift in Sources */,
+				A10000000000000000000021 /* NotificationPreferences.swift in Sources */,
 				A10000000000000000000006 /* NapPrediction.swift in Sources */,
 				A10000000000000000000007 /* RootView.swift in Sources */,
 				A10000000000000000000008 /* MainTabView.swift in Sources */,
@@ -321,6 +345,10 @@
 				A10000000000000000000016 /* SleepDetectionService.swift in Sources */,
 				A10000000000000000000017 /* NotificationService.swift in Sources */,
 				A10000000000000000000018 /* MLPredictionService.swift in Sources */,
+				A10000000000000000000022 /* SecureStorage.swift in Sources */,
+				A10000000000000000000023 /* HouseholdService.swift in Sources */,
+				A10000000000000000000024 /* SyncCoordinator.swift in Sources */,
+				A10000000000000000000025 /* ServiceProtocols.swift in Sources */,
 				A10000000000000000000019 /* Constants.swift in Sources */,
 				A1000000000000000000001A /* DesignTokens.swift in Sources */,
 				A1000000000000000000001B /* Date+Formatting.swift in Sources */,
@@ -385,7 +413,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG USE_DEMO_MODE $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -445,6 +473,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG USE_DEMO_MODE $(inherited)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";

@@ -21,12 +21,15 @@ struct Child: Identifiable {
     var ageRange: AgeRange
     /// Optional profile photo. User input; stored locally.
     var photoURL: URL?
+    /// Which NurtureBand is assigned to this child. Nil until paired.
+    var bandID: UUID?
 
-    init(id: UUID = UUID(), name: String, birthdate: Date, ageRange: AgeRange, photoURL: URL? = nil) {
+    init(id: UUID = UUID(), name: String, birthdate: Date, ageRange: AgeRange, photoURL: URL? = nil, bandID: UUID? = nil) {
         self.id = id
         self.name = name
         self.birthdate = birthdate
         self.ageRange = ageRange
         self.photoURL = photoURL
+        self.bandID = bandID
     }
 }

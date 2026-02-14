@@ -1,0 +1,35 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+Package.pins
+
+# CocoaPods (if used)
+Pods/
+*.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# Local / secrets (if any)
+.env
+.env.local
+*.xcconfig.local
+Secrets.xcconfig
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*~

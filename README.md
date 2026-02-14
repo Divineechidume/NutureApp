@@ -9,7 +9,7 @@ This repository contains the initial scaffolding and placeholder implementation.
 ## Architecture
 
 - **MVC**: Model–View–Controller separation.
-  - **Models** (`Nurture/Models/`): Data structures (Child, SleepSession, WearableDevice, NapPrediction). No business logic.
+  - **Models** (`Nurture/Models/`): Data structures (Child, Household, Member, NurtureBand, NotificationPreferences, SleepSession, NapPrediction). No business logic. WearableDevice is a typealias for NurtureBand.
   - **Views** (`Nurture/Views/`): SwiftUI views only. They bind to controller state and design tokens; they do not call services directly.
   - **Controllers** (`Nurture/Controllers/`): `ObservableObject` types that hold state and coordinate services. They receive services via initializer (dependency injection) and expose `@Published` properties for the UI.
 - **Services** (`Nurture/Services/`): Single-responsibility classes (Bluetooth, SleepDetection, Notifications, ML prediction). Controllers depend on them; views do not.
@@ -64,6 +64,19 @@ Suggested order:
 8. **Sleep detection and notifications** — Parse BLE data into sleep/wake; trigger rollover and connection-lost alerts.
 9. **Nap prediction** — Age-based logic is stubbed; add Core ML later for “learn over 14 days”.
 10. **Persistence and polish** — Core Data or SwiftData for sessions and profile; analytics placeholders where noted.
+
+---
+
+## Local Setup
+
+**Prerequisites:** Xcode 15+, iOS 15+ Simulator or device.
+
+1. Clone the repo and open `Nurture.xcodeproj` in Xcode.
+2. Select the **Nurture** scheme and an iOS Simulator (e.g. iPhone 15).
+3. Build and run (⌘R).
+4. To test onboarding again: Settings → Demo → Reset onboarding, then relaunch.
+
+For more detail (troubleshooting, branch workflow), see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

@@ -9,7 +9,7 @@ import Foundation
 import UserNotifications
 
 /// Requests permission; sends rollover and connection-lost alerts. Critical alerts for rollover (PRD §4).
-final class NotificationService: ObservableObject {
+final class NotificationService: ObservableObject, NotificationServiceProtocol {
     /// Request notification permission. Call during onboarding (PermissionsView). PRD Section 7.
     func requestPermission(completion: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in

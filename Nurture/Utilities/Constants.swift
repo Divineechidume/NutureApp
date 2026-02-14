@@ -9,8 +9,12 @@ import Foundation
 
 // MARK: - Demo Mode
 
-/// When true, app uses mock data and skips real Bluetooth. Set via scheme or #if DEBUG for simulator.
+/// When true, app uses mock data and skips real Bluetooth. Set via build setting USE_DEMO_MODE (Debug has it).
+#if USE_DEMO_MODE
 let useDemoMode = true
+#else
+let useDemoMode = false
+#endif
 
 /// Mock child name for demo. PRD: Initial state.
 let mockChildName = "Emma"

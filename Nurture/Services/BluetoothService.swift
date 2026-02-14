@@ -12,7 +12,7 @@ import CoreBluetooth
 
 /// Handles BLE communication: pairing, real-time data, connection monitoring.
 /// Integration point: Controllers consume device list, connection state, and sleep/rollover signals.
-final class BluetoothService: NSObject, ObservableObject {
+final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtocol {
     // MARK: - Published State
 
     @Published var isPoweredOn = false
