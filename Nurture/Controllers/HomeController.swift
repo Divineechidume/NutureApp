@@ -82,7 +82,10 @@ final class HomeController: ObservableObject {
     private func loadMockData() {
         child = Child(name: mockChildName, birthdate: Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date(), ageRange: .sixToTwelveMonths)
         isAsleep = true
-        sleepStartDate = Calendar.current.date(byAdding: .hour, value: -2, byAdding: .minute, value: -15, to: Date())
+        var components = DateComponents()
+        components.hour = -2
+        components.minute = -15
+        sleepStartDate = Calendar.current.date(byAdding: components, to: Date())
         lastNightTotalDuration = 9 * 3600 + 15 * 60 // 9h 15m
         todaysNapsDuration = 1 * 3600 + 30 * 60
         todaysNapCount = 1

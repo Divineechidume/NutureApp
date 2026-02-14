@@ -29,7 +29,7 @@ final class BluetoothService: NSObject, ObservableObject {
     // Dependencies: CoreBluetooth framework
     // Estimated complexity: High
 
-    #warning("TODO: Implement BLE characteristic read for sleep state — blocks Home current status")
+    // TODO: Implement BLE characteristic read for sleep state — blocks Home current status
     private var centralManager: CBCentralManager?
 
     override init() {

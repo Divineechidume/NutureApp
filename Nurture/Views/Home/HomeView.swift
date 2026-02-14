@@ -88,7 +88,7 @@ struct HomeView: View {
             }
             .padding(DesignTokens.spacingMD)
             .background(Color.white.opacity(0.9))
-            .cornerRadius(DesignTokens.cardCorner)
+            .cornerRadius(DesignTokens.cardCornerRadius)
 
             if !isAsleep, let nap = controller.napPrediction {
                 HStack {
@@ -104,7 +104,7 @@ struct HomeView: View {
                 }
                 .padding(DesignTokens.spacingMD)
                 .background(Color.white.opacity(0.9))
-                .cornerRadius(DesignTokens.cardCorner)
+                .cornerRadius(DesignTokens.cardCornerRadius)
             }
         }
     }

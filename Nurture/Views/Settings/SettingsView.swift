@@ -15,21 +15,45 @@ struct SettingsView: View {
     @ObservedObject var notificationService: NotificationService
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 DesignTokens.cream.ignoresSafeArea()
                 List {
                     Section("Child Profile") {
                         if let child = controller.child {
-                            LabeledContent("Name", value: child.name)
-                            LabeledContent("Age range", value: child.ageRange.displayName)
+                            HStack {
+                                Text("Name")
+                                    .foregroundColor(DesignTokens.textSecondary)
+                                Spacer()
+                                Text(child.name)
+                                    .foregroundColor(DesignTokens.textPrimary)
+                            }
+                            HStack {
+                                Text("Age range")
+                                    .foregroundColor(DesignTokens.textSecondary)
+                                Spacer()
+                                Text(child.ageRange.displayName)
+                                    .foregroundColor(DesignTokens.textPrimary)
+                            }
                         }
                         // TODO: Navigate to profile edit; photo. PRD Section 6.
                     }
                     Section("Device Management") {
                         if let device = controller.device {
-                            LabeledContent("Battery", value: device.batteryLevel.map { "\($0)%" } ?? "—")
-                            LabeledContent("Firmware", value: device.firmwareVersion ?? "—")
+                            HStack {
+                                Text("Battery")
+                                    .foregroundColor(DesignTokens.textSecondary)
+                                Spacer()
+                                Text(device.batteryLevel.map { "\($0)%" } ?? "—")
+                                    .foregroundColor(DesignTokens.textPrimary)
+                            }
+                            HStack {
+                                Text("Firmware")
+                                    .foregroundColor(DesignTokens.textSecondary)
+                                Spacer()
+                                Text(device.firmwareVersion ?? "—")
+                                    .foregroundColor(DesignTokens.textPrimary)
+                            }
                         }
                         Button("Unpair Device", role: .destructive) {
                             // TODO: Unpair with confirmation. PRD Section 6.
@@ -69,7 +93,6 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

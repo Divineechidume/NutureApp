@@ -13,7 +13,7 @@ struct HistoryView: View {
     @ObservedObject var controller: HistoryController
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 DesignTokens.cream.ignoresSafeArea()
                 if controller.daySummaries.isEmpty {
@@ -28,7 +28,6 @@ struct HistoryView: View {
                         }
                     }
                     .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
                 }
             }
             .navigationTitle("History")
