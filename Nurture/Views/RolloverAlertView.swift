@@ -2,8 +2,7 @@
 //  RolloverAlertView.swift
 //  Nurture
 //
-//  Full-screen position change alert. FDA-compliant informational tone: lavender/cream (NOT alarming).
-//  PRD Section 4: "Check on [Child's Name]", dismissal on "Got it".
+//  Full-screen rollover alert. PRD Section 4: "Check on [Child's Name]", peach/coral, "I've Checked".
 //
 
 import SwiftUI
@@ -21,7 +20,7 @@ final class RolloverAlertState: ObservableObject {
     }
 }
 
-/// Full-screen position change alert. Calm informational design (lavender/cream) for FDA compliance.
+/// Full-screen rollover alert. Calm but urgent — peach/coral accent, "Check on [Child]", "I've Checked".
 struct RolloverAlertView: View {
     let childName: String
     let rolloverTime: Date
@@ -37,17 +36,17 @@ struct RolloverAlertView: View {
         VStack(spacing: Spacing.lg) {
             Spacer()
 
-            Image(systemName: "info.circle.fill")
+            Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 64))
-                .foregroundColor(.lavender)
+                .foregroundColor(.peachCoral)
                 .padding(.top, Spacing.xl)
 
             VStack(spacing: Spacing.xs) {
-                Text("Position Update")
+                Text("Check on \(childName)")
                     .font(.displayMedium)
                     .foregroundColor(.textPrimary)
 
-                Text("\(childName) changed position at \(timeString)")
+                Text("\(childName) rolled over at \(timeString)")
                     .font(.bodyMedium)
                     .foregroundColor(.textSecondary)
                     .multilineTextAlignment(.center)
@@ -55,14 +54,14 @@ struct RolloverAlertView: View {
             }
 
             Button(action: onDismiss) {
-                Text("Got it")
+                Text("I've Checked")
                     .font(.labelLarge)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: CornerRadius.small)
-                            .fill(Color.lavender)
+                            .fill(Color.peachCoral)
                     )
             }
             .padding(.horizontal, Spacing.lg)
@@ -79,8 +78,8 @@ struct RolloverAlertView: View {
 
     private var relativeTimeString: String {
         let s = Int(-rolloverTime.timeIntervalSinceNow)
-        if s < 60 { return "Position change detected just now" }
-        if s < 120 { return "Position change detected 1 minute ago" }
-        return "Position change detected \(s / 60) minutes ago"
+        if s < 60 { return "Rollover detected just now" }
+        if s < 120 { return "Rollover detected 1 minute ago" }
+        return "Rollover detected \(s / 60) minutes ago"
     }
 }

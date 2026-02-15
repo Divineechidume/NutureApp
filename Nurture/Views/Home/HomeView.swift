@@ -51,7 +51,7 @@ struct HomeView: View {
     }
 
     private func secondaryCards(isAsleep: Bool) -> some View {
-        VStack(spacing: Spacing.sm) {
+        VStack(spacing: Spacing.xs) {
             InfoCard(
                 icon: "moon.fill",
                 iconColor: Color(hex: "6366F1"),
@@ -155,7 +155,7 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Sleep Status Card
+// MARK: - Sleep Status (Original PRD layout: centered on background, no card)
 
 struct SleepStatusCard: View {
     let isAsleep: Bool
@@ -182,14 +182,8 @@ struct SleepStatusCard: View {
                     .foregroundColor(.white.opacity(0.7))
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.large)
-                .fill(isAsleep ? Color.sleepBackground : Color.cardBackground)
-                .cardShadowPrimary()
-        )
-        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.lg)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isAsleep)
     }
 }
@@ -203,27 +197,27 @@ struct InfoCard: View {
     let value: String
 
     var body: some View {
-        HStack(spacing: Spacing.sm) {
+        HStack(spacing: Spacing.xs) {
             Image(systemName: icon)
-                .font(.system(size: 24))
+                .font(.system(size: 18))
                 .foregroundColor(iconColor)
-                .frame(width: 48, height: 48)
+                .frame(width: 36, height: 36)
                 .background(Circle().fill(iconColor.opacity(0.15)))
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.bodySmall)
+                    .font(.labelSmall)
                     .foregroundColor(.textSecondary)
                 Text(value)
-                    .font(.headingSmall)
+                    .font(.bodyMedium)
                     .foregroundColor(.textPrimary)
             }
 
             Spacer()
         }
-        .padding(Spacing.md)
+        .padding(Spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: CornerRadius.medium)
+            RoundedRectangle(cornerRadius: CornerRadius.small)
                 .fill(Color.cardBackground)
                 .cardShadowSecondary()
         )
