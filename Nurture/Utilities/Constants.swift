@@ -46,7 +46,7 @@ let nighttimeEndHour = 7     // 7 AM
 // MARK: - Age Range (PRD Section 1, 5)
 
 /// Age bracket for child. Used in onboarding and nap prediction wake windows.
-enum AgeRange: String, CaseIterable, Identifiable {
+enum AgeRange: String, CaseIterable, Identifiable, Codable {
     case zeroToSixMonths = "0-6mo"
     case sixToTwelveMonths = "6-12mo"
     case oneToTwoYears = "1-2yr"

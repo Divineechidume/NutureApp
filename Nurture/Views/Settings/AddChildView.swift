@@ -44,7 +44,7 @@ struct AddChildView: View {
                         childrenStore.addChild(child)
                         dismiss()
                     }
-                    .fontWeight(.semibold)
+                    .font(.system(size: 17, weight: .semibold))
                 }
             }
         }
