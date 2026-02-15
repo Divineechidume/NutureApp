@@ -17,6 +17,7 @@ final class OnboardingController: ObservableObject {
     @Published var currentStep: OnboardingStep = .welcome
     @Published var childName: String = ""
     @Published var childBirthdate: Date = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
+    @Published var parentName: String = ""
     @Published var isPairing: Bool = false
     @Published var pairingError: String?
 

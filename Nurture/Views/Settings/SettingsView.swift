@@ -312,11 +312,19 @@ struct SettingsView: View {
         .padding(.horizontal, Spacing.md)
     }
 
+    @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
+
     private var demoSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsSectionHeader(title: "DEMO")
             SettingsSectionCard {
                 VStack(spacing: 0) {
+                    SettingsToggleRow(
+                        icon: "tray",
+                        title: "Show empty states (no device, no data)",
+                        isOn: $demoShowEmptyStates
+                    )
+                    SettingsDivider()
                     SettingsToggleRow(
                         icon: "sun.max",
                         title: "Show awake state",

@@ -14,10 +14,13 @@ struct HomeView: View {
     @ObservedObject var childrenStore: ChildrenStore
     @ObservedObject var householdService: HouseholdService
 
-    /// Whether a device is paired. In demo mode always true; otherwise from BluetoothService.
+    @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
+
+    /// Whether a device is paired. In demo mode: true unless "Show empty states" is on; otherwise from BluetoothService.
     private var hasDevice: Bool {
+        if useDemoMode && demoShowEmptyStates { return false }
         // TODO: Wire to BluetoothService / pairing state
-        true
+        return useDemoMode ? true : true
     }
 
     private var familyNameDisplay: String {

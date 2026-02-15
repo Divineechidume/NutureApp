@@ -64,6 +64,13 @@ struct PairDeviceView: View {
                         .foregroundColor(DesignTokens.peachCoral)
                 }
 
+                Text("Your name")
+                    .font(DesignTokens.captionFont())
+                    .foregroundColor(DesignTokens.textSecondary)
+                TextField("Parent or caregiver name", text: $controller.parentName)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.words)
+
                 Text("Child's name")
                     .font(DesignTokens.captionFont())
                     .foregroundColor(DesignTokens.textSecondary)

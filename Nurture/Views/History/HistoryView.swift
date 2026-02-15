@@ -10,12 +10,17 @@ import SwiftUI
 /// List of past 7 days, newest first; tap to expand sessions.
 struct HistoryView: View {
     @ObservedObject var controller: HistoryController
+    @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
+
+    private var showEmptyState: Bool {
+        (useDemoMode && demoShowEmptyStates) || controller.daySummaries.isEmpty
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
                 DesignTokens.cream.ignoresSafeArea()
-                if controller.daySummaries.isEmpty {
+                if showEmptyState {
                     EmptyHistoryView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {

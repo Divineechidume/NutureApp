@@ -33,6 +33,7 @@ struct InviteMemberView: View {
                         copied = false
                     }
                 }
+                .disabled(invitationCode.isEmpty)
                 .font(DesignTokens.bodyFont(size: 17))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

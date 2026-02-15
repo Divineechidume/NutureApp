@@ -25,11 +25,9 @@ struct HouseholdMembersView: View {
                         )
                     }
                 }
-                if (householdService.currentHousehold?.memberIDs.count ?? 0) <= 1 {
-                    Text("Invite members from the Invite Member screen.")
-                        .font(DesignTokens.captionFont())
-                        .foregroundColor(DesignTokens.textSecondary)
-                }
+                Text("Invite members from the Invite Member screen.")
+                    .font(DesignTokens.captionFont())
+                    .foregroundColor(DesignTokens.textSecondary)
             }
         }
         .navigationTitle("Household Members")
