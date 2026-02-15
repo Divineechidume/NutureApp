@@ -2,45 +2,53 @@
 //  WelcomeView.swift
 //  Nurture
 //
-//  Onboarding screen 1: Welcome. PRD Section 7 - "Welcome to Nurture", CTA "Get Started".
+//  Onboarding screen 1: Welcome with custom illustration. PRD Section 7.
 //
 
 import SwiftUI
 
-/// Welcome screen. Illustration + "Simple sleep tracking for ages 0–3" + Get Started.
+/// Welcome screen. Custom illustration + "Sleep tracking for your whole household" + Get Started.
 struct WelcomeView: View {
     var onContinue: () -> Void
 
     var body: some View {
         ZStack {
             DesignTokens.cream.ignoresSafeArea()
-            VStack(spacing: DesignTokens.spacingXL) {
+            VStack(spacing: Spacing.lg) {
                 Spacer()
-                // TODO: Add illustration of wearable + phone
-                // PRD Reference: Section 7 - Screen 1
-                Text("Welcome to Nurture")
-                    .font(DesignTokens.headingFont(size: 28))
-                    .foregroundColor(DesignTokens.textPrimary)
-                Text("Simple sleep tracking for ages 0–3")
-                    .font(DesignTokens.bodyFont())
-                    .foregroundColor(DesignTokens.textSecondary)
-                    .multilineTextAlignment(.center)
-                Text("A calm companion for your baby's sleep")
-                    .font(DesignTokens.bodyFont())
-                    .foregroundColor(DesignTokens.textSecondary)
-                    .multilineTextAlignment(.center)
+
+                Image("welcome_family")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 220)
+
+                VStack(spacing: 12) {
+                    Text("Welcome to Nurture")
+                        .font(.displayMedium)
+                        .foregroundColor(.textPrimary)
+
+                    Text("Sleep tracking for your whole household")
+                        .font(.bodyLarge)
+                        .foregroundColor(.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+
                 Spacer()
+
                 Button("Get Started") {
                     onContinue()
                 }
-                .font(DesignTokens.bodyFont(size: 17))
+                .font(.labelLarge)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, DesignTokens.spacingMD)
-                .background(DesignTokens.sageGreen)
-                .cornerRadius(DesignTokens.buttonCornerRadius)
-                .padding(.horizontal, DesignTokens.spacingLG)
-                .padding(.bottom, DesignTokens.spacingXL)
+                .padding(.vertical, Spacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.small)
+                        .fill(Color.sageGreen)
+                )
+                .padding(.horizontal, Spacing.lg)
+                .padding(.bottom, Spacing.xl)
             }
         }
     }

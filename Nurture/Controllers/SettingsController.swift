@@ -9,9 +9,8 @@
 import Foundation
 import Combine
 
-/// Manages settings screen state: profile, device, notification toggles.
+/// Manages settings screen state: device, notification toggles. Children managed by ChildrenStore.
 final class SettingsController: ObservableObject {
-    @Published var child: Child?
     @Published var device: WearableDevice?
     @Published var rolloverAlertsEnabled: Bool = true
     @Published var napPredictionsEnabled: Bool = true
@@ -21,12 +20,6 @@ final class SettingsController: ObservableObject {
     // Estimated complexity: Low
 
     init() {
-        if let savedChild = ChildProfileStore.load() {
-            child = savedChild
-        } else if useDemoMode {
-            let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
-            child = Child(name: mockChildName, birthdate: birthdate, ageRange: AgeRange.from(birthdate: birthdate))
-        }
         if useDemoMode {
             device = WearableDevice(name: "Nurture Ankle", batteryLevel: 85, firmwareVersion: "1.0.0", isConnected: true)
         }

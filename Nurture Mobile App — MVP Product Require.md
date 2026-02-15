@@ -27,6 +27,7 @@ As a parent, I want to:
 - Estimate when my baby might need their next nap
 - Review sleep history for the past week to spot patterns
 - Pair and manage my Nurture wearable device
+- Invite another caregiver to my household (view members, generate invitation code)
 - Feel reassured, not anxious, when checking the app
 
 ## MVP Feature Set
@@ -192,6 +193,7 @@ Naps
 
 **Settings Menu:**
 
+- Household: Household name (editable), Members list, Invite Member (6-digit code, copy). Invitation codes are stored locally only (no backend in MVP).
 - Child Profile: Name, Birthdate, Current age range (editable), Photo (optional)
 - Device Management: Wearable battery level, Firmware version, "Unpair Device" option
 - Notifications: Toggle rollover alerts on/off, Toggle nap predictions on/off
@@ -214,6 +216,10 @@ Naps
 - Screen 2: Permissions — Request Bluetooth and Push Notification permissions; explain why each is needed (1 sentence each)
 - Screen 3: Pair Device (flow described in Feature 1)
 - Screen 4: Quick Tour (Optional Carousel) — Slide 1: "See when your baby is sleeping", Slide 2: "Get alerts if they roll over", Slide 3: "Understand their sleep patterns", CTA: "Start Tracking"
+
+**Post-Onboarding (Automatic):**
+
+- On completing the Quick Tour, a household is created with default name "My Family" and the primary member derived from the child's name. This household is persisted locally.
 
 **Requirements:**
 
@@ -241,6 +247,7 @@ Naps
 - Local: SQLite or Core Data for sleep history
 - No cloud sync in MVP (all data stored on-device)
 - Data retained for 30 days (configurable)
+- Household data (household, primary member, invitation codes) stored on-device via local persistence; cleared on "Reset onboarding"
 
 **Push Notifications:**
 
@@ -268,6 +275,7 @@ Explicitly NOT included in v1.0:
 - ❌ Audio monitoring or white noise
 - ❌ Video streaming (this is a wearable, not a camera)
 - ❌ Multiple child profiles (one child per account in MVP)
+- ❌ Join household flow (another device entering invitation code to join); invitation codes are viewable and copyable locally only
 
 ## Success Metrics
 
@@ -347,10 +355,21 @@ Explicitly NOT included in v1.0:
   _Proposal:_ 7 PM – 7 AM = nighttime, rest = naps (configurable in settings later)
 - **How do we handle twins or multiple children?**  
   _MVP:_ One child per account (require separate accounts for twins). _Future:_ Multi-child profiles
+- **What is the household model for?**  
+  _MVP:_ A household is created during onboarding for future multi-member support. Primary member can view household name, members list, and generate/copy a 6-digit invitation code — all stored locally. Join flow (another device using the code) is deferred post-MVP.
 - **What if wearable battery dies overnight?**  
   Alert parent when battery <20%, recommend charging
 
-## Appendix: Screen Mockup Descriptions
+## Appendix A: Household Model (MVP)
+
+The app uses a simple household model for future multi-member support:
+
+- **Household:** A named group (default "My Family") created at onboarding completion. Stored locally.
+- **Member:** Has a name and role. One member is the **primary** (the onboarding user); other roles are for future use.
+- **Invitation Code:** A 6-digit code generated for the household, stored on-device. Used to view/copy; joining another device via this code is out of scope for MVP.
+- **Persistence:** Household, primary member, and invitation codes are saved locally and cleared when the user resets onboarding.
+
+## Appendix B: Screen Mockup Descriptions
 
 **Home Screen (Asleep State)**
 

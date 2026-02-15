@@ -40,10 +40,15 @@
 		A1000000000000000000001C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* Assets.xcassets */; };
 		A1000000000000000000001D /* RolloverAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* RolloverAlertView.swift */; };
 		A1000000000000000000001E /* ChildProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* ChildProfileStore.swift */; };
+		A10000000000000000000026 /* HouseholdStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000026 /* HouseholdStore.swift */; };
 		A10000000000000000000022 /* SecureStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000022 /* SecureStorage.swift */; };
 		A10000000000000000000023 /* HouseholdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000023 /* HouseholdService.swift */; };
 		A10000000000000000000024 /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000024 /* SyncCoordinator.swift */; };
+		A10000000000000000000027 /* HouseholdMembersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000027 /* HouseholdMembersView.swift */; };
+		A10000000000000000000028 /* InviteMemberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000028 /* InviteMemberView.swift */; };
 		A10000000000000000000025 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* ServiceProtocols.swift */; };
+		A10000000000000000000029 /* ChildrenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* ChildrenStore.swift */; };
+		A1000000000000000000002A /* AddChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* AddChildView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -81,10 +86,15 @@
 		A2000000000000000000001C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000000000000000000001D /* RolloverAlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RolloverAlertView.swift; sourceTree = "<group>"; };
 		A2000000000000000000001E /* ChildProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildProfileStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000026 /* HouseholdStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdStore.swift; sourceTree = "<group>"; };
 		A20000000000000000000022 /* SecureStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureStorage.swift; sourceTree = "<group>"; };
 		A20000000000000000000023 /* HouseholdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdService.swift; sourceTree = "<group>"; };
 		A20000000000000000000024 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
+		A20000000000000000000027 /* HouseholdMembersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdMembersView.swift; sourceTree = "<group>"; };
+		A20000000000000000000028 /* InviteMemberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteMemberView.swift; sourceTree = "<group>"; };
 		A20000000000000000000025 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
+		A20000000000000000000029 /* ChildrenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildrenStore.swift; sourceTree = "<group>"; };
+		A2000000000000000000002A /* AddChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChildView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,6 +197,7 @@
 				A20000000000000000000023 /* HouseholdService.swift */,
 				A20000000000000000000024 /* SyncCoordinator.swift */,
 				A20000000000000000000025 /* ServiceProtocols.swift */,
+				A20000000000000000000029 /* ChildrenStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -197,6 +208,7 @@
 				A20000000000000000000019 /* Constants.swift */,
 				A2000000000000000000001A /* DesignTokens.swift */,
 				A2000000000000000000001E /* ChildProfileStore.swift */,
+				A20000000000000000000026 /* HouseholdStore.swift */,
 				A4000000000000000000000E /* Extensions */,
 			);
 			path = Utilities;
@@ -242,6 +254,9 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000010 /* SettingsView.swift */,
+				A20000000000000000000027 /* HouseholdMembersView.swift */,
+				A20000000000000000000028 /* InviteMemberView.swift */,
+				A2000000000000000000002A /* AddChildView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -337,6 +352,8 @@
 				A1000000000000000000000E /* HomeView.swift in Sources */,
 				A1000000000000000000000F /* HistoryView.swift in Sources */,
 				A10000000000000000000010 /* SettingsView.swift in Sources */,
+				A10000000000000000000027 /* HouseholdMembersView.swift in Sources */,
+				A10000000000000000000028 /* InviteMemberView.swift in Sources */,
 				A10000000000000000000011 /* OnboardingController.swift in Sources */,
 				A10000000000000000000012 /* HomeController.swift in Sources */,
 				A10000000000000000000013 /* HistoryController.swift in Sources */,
@@ -354,6 +371,9 @@
 				A1000000000000000000001B /* Date+Formatting.swift in Sources */,
 				A1000000000000000000001D /* RolloverAlertView.swift in Sources */,
 				A1000000000000000000001E /* ChildProfileStore.swift in Sources */,
+				A10000000000000000000026 /* HouseholdStore.swift in Sources */,
+				A10000000000000000000029 /* ChildrenStore.swift in Sources */,
+				A1000000000000000000002A /* AddChildView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

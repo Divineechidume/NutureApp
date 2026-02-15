@@ -20,6 +20,9 @@ final class HomeController: ObservableObject {
     @Published var todaysNapCount: Int = 0
     @Published var napPrediction: NapPrediction?
     @Published var child: Child?
+
+    private let childrenStore: ChildrenStore?
+    private var cancellable: AnyCancellable?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
 
@@ -39,7 +42,15 @@ final class HomeController: ObservableObject {
     // PRD Reference: Section 5
     // Estimated complexity: Medium
 
-    init() {
+    init(childrenStore: ChildrenStore? = nil) {
+        self.childrenStore = childrenStore
+        if let store = childrenStore {
+            child = store.selectedChild
+            cancellable = store.objectWillChange.sink { [weak self] _ in
+                self?.child = store.selectedChild
+                self?.objectWillChange.send()
+            }
+        }
         if useDemoMode {
             loadMockData()
         }
@@ -73,6 +84,9 @@ final class HomeController: ObservableObject {
 
     func refresh() {
         lastUpdated = Date()
+        if let store = childrenStore {
+            child = store.selectedChild
+        }
         if useDemoMode {
             loadMockData()
         }
@@ -86,7 +100,9 @@ final class HomeController: ObservableObject {
     }
 
     private func loadMockData() {
-        if let savedChild = ChildProfileStore.load() {
+        if let store = childrenStore {
+            child = store.selectedChild
+        } else if let savedChild = ChildProfileStore.load() {
             child = savedChild
         } else {
             let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()

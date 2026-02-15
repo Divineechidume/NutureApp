@@ -22,13 +22,16 @@ final class HistoryController: ObservableObject {
     @Published var daySummaries: [DaySummary] = []
     @Published var expandedDayId: Date?
 
+    private let childrenStore: ChildrenStore?
+
     // Integration point: Local persistence — load/save sleep sessions (Core Data / SwiftData).
     // TODO: Inject PersistenceService or local storage
     // Purpose: Load/save sleep sessions; retain 30 days (configurable). PRD Technical Requirements.
     // Dependencies: SleepSession model, Core Data or SwiftData
     // Estimated complexity: Medium
 
-    init() {
+    init(childrenStore: ChildrenStore? = nil) {
+        self.childrenStore = childrenStore
         if useDemoMode {
             loadMockHistory()
         }
@@ -44,7 +47,7 @@ final class HistoryController: ObservableObject {
 
     private func loadMockHistory() {
         let cal = Calendar.current
-        let childId = UUID()
+        let childId = childrenStore?.selectedChild?.id ?? UUID()
         var summaries: [DaySummary] = []
         for dayOffset in 0..<3 {
             guard let dayStart = cal.date(byAdding: .day, value: -dayOffset, to: Date()),

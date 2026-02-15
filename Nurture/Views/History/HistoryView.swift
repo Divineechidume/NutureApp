@@ -2,13 +2,12 @@
 //  HistoryView.swift
 //  Nurture
 //
-//  Past 7 days sleep list; expandable rows. PRD Section 3 - Sleep History.
-//  Color-coded bars: nighttime (dark sage), naps (peach). Empty state TODO.
+//  Past 7 days sleep list; expandable rows. Empty state with illustration. PRD Section 3.
 //
 
 import SwiftUI
 
-/// List of past 7 days, newest first; tap to expand sessions. PRD: "Today", "Yesterday", "Monday, Feb 3".
+/// List of past 7 days, newest first; tap to expand sessions.
 struct HistoryView: View {
     @ObservedObject var controller: HistoryController
 
@@ -17,10 +16,8 @@ struct HistoryView: View {
             ZStack {
                 DesignTokens.cream.ignoresSafeArea()
                 if controller.daySummaries.isEmpty {
-                    Text("No sleep data yet")
-                        .font(DesignTokens.bodyFont())
-                        .foregroundColor(DesignTokens.textSecondary)
-                    // TODO: Empty state illustration. PRD Section 3.
+                    EmptyHistoryView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List {
                         ForEach(controller.daySummaries) { day in
@@ -84,5 +81,27 @@ struct HistoryView: View {
             Spacer()
         }
         .padding(.vertical, DesignTokens.spacingXS)
+    }
+}
+
+struct EmptyHistoryView: View {
+    var body: some View {
+        VStack(spacing: Spacing.lg) {
+            Image("empty_no_data")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 140)
+
+            Text("No sleep data yet")
+                .font(.headingLarge)
+                .foregroundColor(.textPrimary)
+
+            Text("Sleep sessions will appear here once your Nurture band starts tracking")
+                .font(.bodyMedium)
+                .foregroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Spacing.xl)
+        }
+        .frame(maxHeight: .infinity)
     }
 }

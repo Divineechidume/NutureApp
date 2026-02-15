@@ -11,6 +11,7 @@ import SwiftUI
 struct OnboardingContainerView: View {
     @Binding var hasCompletedOnboarding: Bool
     @ObservedObject var controller: OnboardingController
+    @ObservedObject var householdService: HouseholdService
 
     var body: some View {
         Group {
@@ -29,16 +30,25 @@ struct OnboardingContainerView: View {
                     onStart: {
                         let child = controller.buildChildProfile()
                         ChildProfileStore.save(child)
+                        createHouseholdIfNeeded(childName: child.name)
                         hasCompletedOnboarding = true
                     },
                     onSkip: {
                         controller.skipTour()
                         let child = controller.buildChildProfile()
                         ChildProfileStore.save(child)
+                        createHouseholdIfNeeded(childName: child.name)
                         hasCompletedOnboarding = true
                     }
                 )
             }
         }
+    }
+
+    private func createHouseholdIfNeeded(childName: String) {
+        guard householdService.currentHousehold == nil else { return }
+        let member = Member(name: childName.isEmpty ? "Primary" : childName, role: .primary)
+        let householdName = "My Family"
+        _ = householdService.createHousehold(name: householdName, primaryMember: member)
     }
 }

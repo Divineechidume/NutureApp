@@ -2,8 +2,8 @@
 //  HomeView.swift
 //  Nurture
 //
-//  Main home screen: current sleep status and secondary cards. PRD Section 2 - Home Screen.
-//  Soft sage when asleep, cream when awake; pull-to-refresh (TODO).
+//  Main home screen: status card, secondary info cards, empty state when no device.
+//  PRD Section 2 - Home Screen. Polished cards with shadows and typography hierarchy.
 //
 
 import SwiftUI
@@ -11,101 +11,209 @@ import SwiftUI
 /// Main home screen. Status card (Asleep/Awake + duration) and secondary info cards.
 struct HomeView: View {
     @ObservedObject var controller: HomeController
+    @ObservedObject var childrenStore: ChildrenStore
 
-    var body: some View {
-        let isAsleep = controller.isAsleep
-        ZStack {
-            (isAsleep ? DesignTokens.sageGreen : DesignTokens.cream).ignoresSafeArea()
-        }
-        .refreshable { controller.refresh() }
-        .overlay(alignment: .topTrailing) {
-            // Settings accessible from Home per PRD (gear top-right)
-            // Navigation to Settings is via tab; optional: same-screen link
-        }
-        .overlay {
-            ScrollView {
-                VStack(spacing: DesignTokens.spacingLG) {
-                    // TODO: Implement sleep status card per PRD Section 2
-                    // - Show "Asleep" or "Awake" with icon
-                    // - Display duration (e.g. "Sleeping for 1h 23m")
-                    // - Show sleep start time when asleep
-                    statusCard(isAsleep: isAsleep)
-                    // TODO: Implement secondary info cards - last night, today's naps, next nap prediction (Feature 5)
-                    secondaryCards(isAsleep: isAsleep)
-                }
-                .padding(DesignTokens.spacingLG)
-            }
-        }
+    /// Whether a device is paired. In demo mode always true; otherwise from BluetoothService.
+    private var hasDevice: Bool {
+        // TODO: Wire to BluetoothService / pairing state
+        true
     }
 
-    private func statusCard(isAsleep: Bool) -> some View {
-        VStack(spacing: DesignTokens.spacingSM) {
-            Text(isAsleep ? "Asleep" : "Awake")
-                .font(DesignTokens.statusTitleFont)
-                .foregroundColor(isAsleep ? .white : DesignTokens.textPrimary)
-            Text(isAsleep ? "Sleeping for \(controller.durationString)" : "Awake for \(controller.durationString)")
-                .font(DesignTokens.bodyFont(size: 18))
-                .foregroundColor(isAsleep ? .white.opacity(0.9) : DesignTokens.textSecondary)
-            if let start = controller.sleepStartTimeString {
-                Text("Fell asleep at \(start)")
-                    .font(DesignTokens.captionFont())
-                    .foregroundColor(isAsleep ? .white.opacity(0.8) : DesignTokens.textSecondary)
+    var body: some View {
+        ZStack {
+            (controller.isAsleep ? Color.sleepBackground : Color.awakeBackground).ignoresSafeArea()
+        }
+        .refreshable { controller.refresh() }
+        .overlay {
+            if hasDevice {
+                ScrollView {
+                    VStack(spacing: Spacing.lg) {
+                        if childrenStore.children.count > 1 {
+                            childSelector
+                        }
+                        SleepStatusCard(
+                            isAsleep: controller.isAsleep,
+                            duration: controller.isAsleep ? "Sleeping for \(controller.durationString)" : "Awake for \(controller.durationString)",
+                            startTime: controller.sleepStartTimeString
+                        )
+                        secondaryCards(isAsleep: controller.isAsleep)
+                    }
+                    .padding(Spacing.lg)
+                }
+            } else {
+                NoDevicePairedView(onPairTapped: { /* Navigate to pairing */ })
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(DesignTokens.spacingXL)
-        .background(isAsleep ? DesignTokens.darkSage : Color.white.opacity(0.8))
-        .cornerRadius(DesignTokens.cardCornerRadius)
     }
 
     private func secondaryCards(isAsleep: Bool) -> some View {
-        VStack(spacing: DesignTokens.spacingMD) {
-            HStack {
-                Image(systemName: "moon.fill")
-                    .foregroundColor(DesignTokens.lavender)
-                Text("Last Night")
-                    .font(DesignTokens.captionFont())
-                    .foregroundColor(DesignTokens.textSecondary)
-                Spacer()
-                Text(controller.lastNightTotalString + " total sleep")
-                    .font(DesignTokens.bodyFont())
-                    .foregroundColor(DesignTokens.textPrimary)
-            }
-            .padding(DesignTokens.spacingMD)
-            .background(Color.white.opacity(0.9))
-            .cornerRadius(DesignTokens.cardCornerRadius)
-
-            HStack {
-                Image(systemName: "sun.max.fill")
-                    .foregroundColor(DesignTokens.peachCoral)
-                Text("Today's Naps")
-                    .font(DesignTokens.captionFont())
-                    .foregroundColor(DesignTokens.textSecondary)
-                Spacer()
-                Text(controller.todaysNapsString)
-                    .font(DesignTokens.bodyFont())
-                    .foregroundColor(DesignTokens.textPrimary)
-            }
-            .padding(DesignTokens.spacingMD)
-            .background(Color.white.opacity(0.9))
-            .cornerRadius(DesignTokens.cardCornerRadius)
-
+        VStack(spacing: Spacing.sm) {
+            InfoCard(
+                icon: "moon.fill",
+                iconColor: Color(hex: "6366F1"),
+                title: "Last Night",
+                value: controller.lastNightTotalString + " total sleep"
+            )
+            InfoCard(
+                icon: "sun.max.fill",
+                iconColor: Color(hex: "F59E0B"),
+                title: "Today's Naps",
+                value: controller.todaysNapsString
+            )
             if !isAsleep, let nap = controller.napPrediction {
-                HStack {
-                    Image(systemName: "lightbulb.fill")
-                        .foregroundColor(DesignTokens.sageGreen)
-                    Text("Next Nap")
-                        .font(DesignTokens.captionFont())
-                        .foregroundColor(DesignTokens.textSecondary)
-                    Spacer()
-                    Text(nap.message)
-                        .font(DesignTokens.bodyFont())
-                        .foregroundColor(DesignTokens.textPrimary)
-                }
-                .padding(DesignTokens.spacingMD)
-                .background(Color.white.opacity(0.9))
-                .cornerRadius(DesignTokens.cardCornerRadius)
+                InfoCard(
+                    icon: "lightbulb.fill",
+                    iconColor: Color(hex: "EAB308"),
+                    title: "Next Nap",
+                    value: nap.message
+                )
             }
         }
+        .padding(.horizontal, Spacing.md)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isAsleep)
+    }
+
+    private var childSelector: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.sm) {
+                ForEach(childrenStore.children) { child in
+                    Button {
+                        childrenStore.selectChild(child.id)
+                    } label: {
+                        HStack(spacing: Spacing.xs) {
+                            Text(child.name)
+                                .font(.labelMedium)
+                                .foregroundColor(childrenStore.selectedChildID == child.id ? .white : .textPrimary)
+                        }
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xs)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.small)
+                                .fill(childrenStore.selectedChildID == child.id ? Color.sageGreen : Color.white.opacity(0.9))
+                                .cardShadowSecondary()
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, Spacing.md)
+        }
+        .padding(.bottom, Spacing.xs)
+    }
+}
+
+// MARK: - Sleep Status Card
+
+struct SleepStatusCard: View {
+    let isAsleep: Bool
+    let duration: String
+    let startTime: String?
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: isAsleep ? "moon.zzz.fill" : "sun.max.fill")
+                .font(.system(size: 48))
+                .foregroundColor(isAsleep ? .white.opacity(0.9) : .textPrimary.opacity(0.9))
+
+            Text(isAsleep ? "Asleep" : "Awake")
+                .font(.displayLarge)
+                .foregroundColor(isAsleep ? .white : .textPrimary)
+
+            Text(duration)
+                .font(.headingMedium)
+                .foregroundColor(isAsleep ? .white.opacity(0.85) : .textSecondary)
+
+            if let startTime = startTime, isAsleep {
+                Text("Fell asleep at \(startTime)")
+                    .font(.bodyMedium)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+        .padding(Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.large)
+                .fill(isAsleep ? Color.sleepBackground : Color.cardBackground)
+                .cardShadowPrimary()
+        )
+        .padding(.horizontal, Spacing.md)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isAsleep)
+    }
+}
+
+// MARK: - Info Card
+
+struct InfoCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: Spacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(iconColor)
+                .frame(width: 48, height: 48)
+                .background(Circle().fill(iconColor.opacity(0.15)))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+                Text(value)
+                    .font(.headingSmall)
+                    .foregroundColor(.textPrimary)
+            }
+
+            Spacer()
+        }
+        .padding(Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.medium)
+                .fill(Color.cardBackground)
+                .cardShadowSecondary()
+        )
+    }
+}
+
+// MARK: - No Device Paired Empty State
+
+struct NoDevicePairedView: View {
+    var onPairTapped: () -> Void
+
+    var body: some View {
+        VStack(spacing: Spacing.lg) {
+            Image("empty_no_device")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 140)
+
+            Text("No device paired")
+                .font(.headingLarge)
+                .foregroundColor(.textPrimary)
+
+            Text("Pair your Nurture band to start tracking sleep")
+                .font(.bodyMedium)
+                .foregroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Spacing.xl)
+
+            Button(action: onPairTapped) {
+                Text("Pair Device")
+                    .font(.labelLarge)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.vertical, Spacing.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.small)
+                            .fill(Color.sageGreen)
+                    )
+            }
+            .padding(.top, Spacing.sm)
+        }
+        .frame(maxHeight: .infinity)
+        .padding(Spacing.lg)
+        .background(Color.cream)
     }
 }

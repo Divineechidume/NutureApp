@@ -14,13 +14,23 @@ struct RootView: View {
     @Binding var hasCompletedOnboarding: Bool
     @StateObject private var onboardingController = OnboardingController()
     @StateObject private var rolloverAlertState = RolloverAlertState()
+    @StateObject private var householdService = HouseholdService()
+    @StateObject private var childrenStore = ChildrenStore()
 
     var body: some View {
         Group {
             if hasCompletedOnboarding {
-                MainTabView(rolloverAlertState: rolloverAlertState)
+                MainTabView(
+                    rolloverAlertState: rolloverAlertState,
+                    householdService: householdService,
+                    childrenStore: childrenStore
+                )
             } else {
-                OnboardingContainerView(hasCompletedOnboarding: $hasCompletedOnboarding, controller: onboardingController)
+                OnboardingContainerView(
+                    hasCompletedOnboarding: $hasCompletedOnboarding,
+                    controller: onboardingController,
+                    householdService: householdService
+                )
             }
         }
         .overlay {

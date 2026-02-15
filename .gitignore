@@ -33,3 +33,4 @@ Thumbs.db
 # IDE
 *.swp
 *~
+.cursor/plans/

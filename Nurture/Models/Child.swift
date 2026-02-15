@@ -10,7 +10,7 @@ import Foundation
 
 /// Represents a child's profile in the app.
 /// Created during onboarding and stored locally. Used for nap prediction age bracket and alert copy ("Check on [name]").
-struct Child: Identifiable {
+struct Child: Identifiable, Codable, Equatable {
     /// Unique identifier. Generated at creation.
     var id: UUID
     /// Child's name from onboarding. User input.
