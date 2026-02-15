@@ -17,12 +17,14 @@ struct DaySummary: Identifiable {
     var totalDuration: TimeInterval { sessions.reduce(0) { $0 + $1.durationSeconds } }
 }
 
-/// Provides past 7 days of sleep data for HistoryView. TODO: PersistenceService.
+/// Provides sleep data for HistoryView calendar. TODO: PersistenceService.
 final class HistoryController: ObservableObject {
     @Published var daySummaries: [DaySummary] = []
-    @Published var expandedDayId: Date?
+    @Published var selectedDate: Date?
+    @Published var displayedMonth: Date = Date()
 
     private let childrenStore: ChildrenStore?
+    private let calendar = Calendar.current
 
     // Integration point: Local persistence — load/save sleep sessions (Core Data / SwiftData).
     // TODO: Inject PersistenceService or local storage
@@ -37,19 +39,47 @@ final class HistoryController: ObservableObject {
         }
     }
 
-    func toggleExpanded(dayId: Date) {
-        if expandedDayId == dayId {
-            expandedDayId = nil
-        } else {
-            expandedDayId = dayId
+    func selectDate(_ date: Date?) {
+        selectedDate = date
+    }
+
+    func goToPreviousMonth() {
+        guard let prev = calendar.date(byAdding: .month, value: -1, to: displayedMonth) else { return }
+        displayedMonth = prev
+    }
+
+    func goToNextMonth() {
+        guard let next = calendar.date(byAdding: .month, value: 1, to: displayedMonth) else { return }
+        displayedMonth = next
+    }
+
+    /// Returns DaySummary for the given date, or nil if no data.
+    func daySummary(for date: Date) -> DaySummary? {
+        let dayStart = calendar.startOfDay(for: date)
+        return daySummaries.first { calendar.isDate($0.date, inSameDayAs: dayStart) }
+    }
+
+    /// Returns start-of-day dates in the given month that have sleep data.
+    func datesWithData(in month: Date) -> Set<Date> {
+        guard let range = calendar.range(of: .day, in: .month, for: month),
+              let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: month)) else {
+            return []
         }
+        var result: Set<Date> = []
+        for dayOffset in 0..<range.count {
+            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: monthStart) else { continue }
+            if daySummary(for: day) != nil {
+                result.insert(calendar.startOfDay(for: day))
+            }
+        }
+        return result
     }
 
     private func loadMockHistory() {
         let cal = Calendar.current
         let childId = childrenStore?.selectedChild?.id ?? UUID()
         var summaries: [DaySummary] = []
-        for dayOffset in 0..<3 {
+        for dayOffset in 0..<14 {
             guard let dayStart = cal.date(byAdding: .day, value: -dayOffset, to: Date()),
                   let prevDay = cal.date(byAdding: .day, value: -1, to: dayStart) else { continue }
             let nightStart = cal.date(bySettingHour: 19, minute: 15, second: 0, of: prevDay)!
