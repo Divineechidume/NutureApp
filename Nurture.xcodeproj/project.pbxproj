@@ -49,6 +49,7 @@
 		A10000000000000000000025 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* ServiceProtocols.swift */; };
 		A10000000000000000000029 /* ChildrenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* ChildrenStore.swift */; };
 		A1000000000000000000002A /* AddChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* AddChildView.swift */; };
+		A1000000000000000000002B /* EditFamilyNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* EditFamilyNameView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -95,6 +96,7 @@
 		A20000000000000000000025 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
 		A20000000000000000000029 /* ChildrenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildrenStore.swift; sourceTree = "<group>"; };
 		A2000000000000000000002A /* AddChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChildView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002B /* EditFamilyNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditFamilyNameView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -257,6 +259,7 @@
 				A20000000000000000000027 /* HouseholdMembersView.swift */,
 				A20000000000000000000028 /* InviteMemberView.swift */,
 				A2000000000000000000002A /* AddChildView.swift */,
+				A2000000000000000000002B /* EditFamilyNameView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -374,6 +377,7 @@
 				A10000000000000000000026 /* HouseholdStore.swift in Sources */,
 				A10000000000000000000029 /* ChildrenStore.swift in Sources */,
 				A1000000000000000000002A /* AddChildView.swift in Sources */,
+				A1000000000000000000002B /* EditFamilyNameView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -12,11 +12,17 @@ import SwiftUI
 struct HomeView: View {
     @ObservedObject var controller: HomeController
     @ObservedObject var childrenStore: ChildrenStore
+    @ObservedObject var householdService: HouseholdService
 
     /// Whether a device is paired. In demo mode always true; otherwise from BluetoothService.
     private var hasDevice: Bool {
         // TODO: Wire to BluetoothService / pairing state
         true
+    }
+
+    private var familyNameDisplay: String {
+        let name = householdService.currentHousehold?.name ?? "My Family"
+        return name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "My Family" : name
     }
 
     var body: some View {
@@ -28,9 +34,7 @@ struct HomeView: View {
             if hasDevice {
                 ScrollView {
                     VStack(spacing: Spacing.lg) {
-                        if childrenStore.children.count > 1 {
-                            childSelector
-                        }
+                        homeHeader
                         SleepStatusCard(
                             isAsleep: controller.isAsleep,
                             duration: controller.isAsleep ? "Sleeping for \(controller.durationString)" : "Awake for \(controller.durationString)",
@@ -73,32 +77,81 @@ struct HomeView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isAsleep)
     }
 
-    private var childSelector: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.sm) {
-                ForEach(childrenStore.children) { child in
-                    Button {
-                        childrenStore.selectChild(child.id)
-                    } label: {
-                        HStack(spacing: Spacing.xs) {
-                            Text(child.name)
-                                .font(.labelMedium)
-                                .foregroundColor(childrenStore.selectedChildID == child.id ? .white : .textPrimary)
-                        }
-                        .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, Spacing.xs)
-                        .background(
-                            RoundedRectangle(cornerRadius: CornerRadius.small)
-                                .fill(childrenStore.selectedChildID == child.id ? Color.sageGreen : Color.white.opacity(0.9))
-                                .cardShadowSecondary()
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
+    private var homeHeader: some View {
+        HStack {
+            Text(familyNameDisplay.uppercased())
+                .font(.labelSmall)
+                .foregroundColor(.textSecondary)
+            Spacer()
+            if !childrenStore.children.isEmpty {
+                childSelectorPill
             }
-            .padding(.horizontal, Spacing.md)
         }
-        .padding(.bottom, Spacing.xs)
+    }
+
+    private var childSelectorPill: some View {
+        Group {
+            if childrenStore.children.count > 1 {
+                Menu {
+                    ForEach(childrenStore.children) { child in
+                        Button {
+                            childrenStore.selectChild(child.id)
+                        } label: {
+                            HStack {
+                                Text(child.name)
+                                if childrenStore.selectedChildID == child.id {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: Spacing.xs) {
+                        Image(systemName: "figure.and.child.holdinghands")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color.sageGreen)
+                        Text(childrenStore.selectedChild?.name ?? "Child")
+                            .font(.labelMedium)
+                            .foregroundColor(.textPrimary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.textSecondary)
+                    }
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.small)
+                            .fill(Color.white.opacity(0.9))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: CornerRadius.small)
+                                    .stroke(Color.sageGreen.opacity(0.5), lineWidth: 1)
+                            )
+                            .cardShadowSecondary()
+                    )
+                }
+                .buttonStyle(.plain)
+            } else if let child = childrenStore.selectedChild {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "figure.and.child.holdinghands")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.sageGreen)
+                    Text(child.name)
+                        .font(.labelMedium)
+                        .foregroundColor(.textPrimary)
+                }
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xs)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.small)
+                        .fill(Color.white.opacity(0.9))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.small)
+                                .stroke(Color.sageGreen.opacity(0.5), lineWidth: 1)
+                        )
+                        .cardShadowSecondary()
+                )
+            }
+        }
     }
 }
 

@@ -49,7 +49,7 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    HomeView(controller: homeController, childrenStore: childrenStore)
+                    HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService)
                 case .history:
                     HistoryView(controller: historyController)
                 case .settings:

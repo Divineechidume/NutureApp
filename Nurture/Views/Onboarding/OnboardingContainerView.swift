@@ -47,7 +47,7 @@ struct OnboardingContainerView: View {
 
     private func createHouseholdIfNeeded(childName: String) {
         guard householdService.currentHousehold == nil else { return }
-        let member = Member(name: childName.isEmpty ? "Primary" : childName, role: .primary)
+        let member = Member(name: "Primary Caregiver", email: "", role: .primary)
         let householdName = "My Family"
         _ = householdService.createHousehold(name: householdName, primaryMember: member)
     }

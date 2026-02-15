@@ -67,6 +67,14 @@ final class HouseholdService: ObservableObject {
         return false
     }
 
+    /// Update the household name and persist.
+    func updateHouseholdName(_ name: String) {
+        guard var household = currentHousehold, let member = currentMember else { return }
+        household.name = name
+        currentHousehold = household
+        HouseholdStore.save(household: household, member: member)
+    }
+
     /// Clear household and member (e.g. when resetting onboarding).
     func clear() {
         currentHousehold = nil

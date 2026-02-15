@@ -15,9 +15,14 @@ struct HouseholdMembersView: View {
         ZStack {
             DesignTokens.cream.ignoresSafeArea()
             List {
-                if let member = householdService.currentMember {
+                if let member = householdService.currentMember, let household = householdService.currentHousehold {
                     Section("Members") {
-                        MemberRow(member: member, isPrimary: true)
+                        MemberRow(
+                            member: member,
+                            isPrimary: true,
+                            household: household,
+                            householdService: householdService
+                        )
                     }
                 }
                 if (householdService.currentHousehold?.memberIDs.count ?? 0) <= 1 {
@@ -27,7 +32,7 @@ struct HouseholdMembersView: View {
                 }
             }
         }
-        .navigationTitle("Members")
+        .navigationTitle("Household Members")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -35,14 +40,23 @@ struct HouseholdMembersView: View {
 private struct MemberRow: View {
     let member: Member
     let isPrimary: Bool
+    let household: Household
+    @ObservedObject var householdService: HouseholdService
+
+    private var subtitle: String {
+        if member.email.isEmpty {
+            return member.role.rawValue
+        }
+        return "\(member.email) · \(member.role.rawValue)"
+    }
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.name)
-                    .font(DesignTokens.bodyFont())
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(DesignTokens.textPrimary)
-                Text(member.role.rawValue.capitalized)
+                Text(subtitle)
                     .font(DesignTokens.captionFont())
                     .foregroundColor(DesignTokens.textSecondary)
             }
@@ -51,6 +65,18 @@ private struct MemberRow: View {
                 Text("Primary")
                     .font(DesignTokens.captionFont())
                     .foregroundColor(DesignTokens.sageGreen)
+            } else {
+                Button {
+                    _ = householdService.removeMember(memberID: member.id, from: household)
+                    if let updated = householdService.currentHousehold, let current = householdService.currentMember {
+                        HouseholdStore.save(household: updated, member: current)
+                    }
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 18))
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

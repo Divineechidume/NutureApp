@@ -51,7 +51,7 @@ enum ChildProfileStore {
     }
 
     static func remove(childID: UUID) {
-        var children = loadAll().filter { $0.id != childID }
+        let children = loadAll().filter { $0.id != childID }
         saveAll(children)
         if loadSelectedID() == childID {
             saveSelectedID(children.first?.id)
@@ -99,7 +99,7 @@ enum ChildProfileStore {
 
     private static func migrateFromLegacySingleChild() -> [Child] {
         guard let legacy = loadLegacySingleChild() else { return [] }
-        var children = [legacy]
+        let children = [legacy]
         saveAll(children)
         saveSelectedID(legacy.id)
         clearLegacyKeys()

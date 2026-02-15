@@ -155,7 +155,12 @@ struct SettingsView: View {
             SettingsSectionHeader(title: "HOUSEHOLD")
             SettingsSectionCard {
                 VStack(spacing: 0) {
-                    SettingsRow(icon: "house", title: "Name", value: household.name)
+                    NavigationLink {
+                        EditFamilyNameView(householdService: householdService)
+                    } label: {
+                        SettingsRow(icon: "house", title: "Family Name", value: household.name.isEmpty ? "My Family" : household.name, showChevron: true)
+                    }
+                    .buttonStyle(.plain)
                     SettingsDivider()
                     NavigationLink {
                         HouseholdMembersView(householdService: householdService)
