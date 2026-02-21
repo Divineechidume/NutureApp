@@ -88,6 +88,8 @@ Suggested order:
 
 **Prerequisites:** Xcode 15+, iOS 15+ Simulator or device.
 
+**Bluetooth testing:** The Simulator does not support BLE. To test pairing or real-time data with the Nurture Band, run on a physical device. See [Testing on a Real Device (Bluetooth Only)](CONTRIBUTING.md#testing-on-a-real-device-bluetooth-only) in CONTRIBUTING.md for setup.
+
 1. Clone the repo and open `Nurture.xcodeproj` in Xcode.
 2. Select the **Nurture** scheme and an iOS Simulator (e.g. iPhone 15).
 3. Build and run (⌘R).
