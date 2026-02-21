@@ -19,6 +19,9 @@ float runningAverage() {
 
 void setup() {
   Serial.begin(9600);
+
+  // Don't wait on serial monitor if trying to connect to iphone device
+  // uncomment if you're using serial monitor
   // while (!Serial)
   //   ;
 
