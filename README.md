@@ -2,7 +2,21 @@
 
 AI-powered sleep tracking app for children ages 0–3 that pairs with a Bluetooth ankle wearable. Built with **Swift** and **SwiftUI** using **MVC** architecture.
 
-This repository contains the initial scaffolding and placeholder implementation. Junior developers can implement features by following the TODO comments and PRD references in the codebase.
+This repository is a monorepo: the iOS app plus the wearable firmware. Junior developers can implement features by following the TODO comments and PRD references in the codebase.
+
+---
+
+## Repository Structure
+
+```
+NutureApp/
+├── Nurture/              # iOS app (Swift, SwiftUI, MVC)
+├── hardware/             # Arduino firmware for the Nurture Band
+│   ├── nurture_band/     # Production firmware — flash this to the wearable
+│   └── prototypes/       # Reference sketches (bluetooth_broadcast, SimpleAccelerometer)
+├── README.md
+└── CONTRIBUTING.md
+```
 
 ---
 
@@ -32,6 +46,7 @@ Principles: single responsibility per service, dependency injection into control
 | **Rollover alert (Safety)** | `Views/RolloverAlertView.swift`, `RolloverAlertState`                        | Full-screen “Check on [Child]” and “I’ve Checked”; demo trigger in Settings. |
 | **Sleep & ML**              | `Services/SleepDetectionService.swift`, `Services/MLPredictionService.swift` | Sleep/wake from BLE data; nap prediction (age-based then ML).                |
 | **Design**                  | `Utilities/DesignTokens.swift`, `Utilities/Constants.swift`                  | Colors, typography, spacing; wake windows, demo flag.                        |
+| **Hardware (Nurture Band)** | `hardware/nurture_band/`, [hardware/README.md](hardware/README.md)           | Wearable firmware, BLE UUIDs, flashing.                                      |
 
 ---
 
@@ -69,12 +84,22 @@ Suggested order:
 
 ## Local Setup
 
+### iOS App
+
 **Prerequisites:** Xcode 15+, iOS 15+ Simulator or device.
 
 1. Clone the repo and open `Nurture.xcodeproj` in Xcode.
 2. Select the **Nurture** scheme and an iOS Simulator (e.g. iPhone 15).
 3. Build and run (⌘R).
 4. To test onboarding again: Settings → Demo → Reset onboarding, then relaunch.
+
+### Hardware
+
+**Prerequisites:** Arduino IDE 2.x, Arduino Nano 33 BLE Sense.
+
+See [hardware/README.md](hardware/README.md) for board setup, BLE specs, and flashing instructions.
+
+---
 
 For more detail (troubleshooting, branch workflow), see [CONTRIBUTING.md](CONTRIBUTING.md).
 

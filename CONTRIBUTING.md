@@ -47,6 +47,7 @@ Thank you for contributing to the Nurture iOS app. This guide helps you get set 
 - **Controllers** — `Nurture/Controllers/` (state coordination, coordinate services)
 - **Services** — `Nurture/Services/` (Bluetooth, Notifications, Sleep, ML)
 - **Utilities** — `Nurture/Utilities/` (Constants, DesignTokens, ChildProfileStore)
+- **Hardware** — `hardware/nurture_band/` (production firmware), `hardware/prototypes/` (reference sketches). See [hardware/README.md](hardware/README.md). Changes to the BLE protocol may require testing with the iOS app’s `BluetoothService` (PRD §1, §4).
 
 See [README.md](README.md) for PRD mapping and architecture details.
 
