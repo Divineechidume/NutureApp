@@ -71,6 +71,8 @@ final class OnboardingController: ObservableObject {
         }
 
         isPairing = true
+        // TODO: Inject BluetoothService and start BLE scan. On devices found: isPairing = false, show list.
+        // On timeout/error: isPairing = false, pairingError = "Could not find device..."
         bluetoothService.scanForDevices()
 
         if useDemoMode {
