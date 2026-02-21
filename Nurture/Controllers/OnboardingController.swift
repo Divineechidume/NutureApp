@@ -35,8 +35,13 @@ final class OnboardingController: ObservableObject {
     // PRD Reference: Section 1 - Device Pairing & Setup
     // Dependencies: BluetoothService must be implemented
     // Estimated complexity: Medium
+    private let bluetoothService: any BluetoothServiceProtocol
+    private var cancellables = Set<AnyCancellable>()
 
-    init() {}
+    init(bluetoothService: any BluetoothServiceProtocol) {
+        self.bluetoothService = bluetoothService
+        bindBluetoothService()
+    }
 
     // MARK: - Actions
 
@@ -58,9 +63,18 @@ final class OnboardingController: ObservableObject {
     /// PRD Reference: Section 1 - Device Pairing & Setup
     func startPairing() {
         pairingError = nil
+
+        guard bluetoothService.isPoweredOn else {
+            isPairing = false
+            pairingError = BluetoothPairingError.bluetoothUnavailable.errorDescription
+            return
+        }
+
         isPairing = true
         // TODO: Inject BluetoothService and start BLE scan. On devices found: isPairing = false, show list.
         // On timeout/error: isPairing = false, pairingError = "Could not find device..."
+        bluetoothService.scanForDevices()
+
         if useDemoMode {
             // Demo: simulate scan ending so UI doesn't stay stuck
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
@@ -75,5 +89,30 @@ final class OnboardingController: ObservableObject {
             birthdate: childBirthdate,
             ageRange: AgeRange.from(birthdate: childBirthdate)
         )
+    }
+
+    // MARK: - Private
+
+    private func bindBluetoothService() {
+        bluetoothService.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.syncPairingStateFromBluetooth()
+            }
+            .store(in: &cancellables)
+
+        syncPairingStateFromBluetooth()
+    }
+
+    private func syncPairingStateFromBluetooth() {
+        if useDemoMode { return }
+
+        isPairing = bluetoothService.isScanning || bluetoothService.isConnecting
+        pairingError = bluetoothService.pairingError?.errorDescription
+
+        if bluetoothService.connectedDevice != nil {
+            pairingError = nil
+            isPairing = false
+        }
     }
 }
