@@ -39,11 +39,12 @@ The Simulator does not support Bluetooth. To test pairing, BLE streaming, or rol
 
 ### Setup (one-time per developer)
 
-1. Connect your iPhone to your Mac via USB.
-2. In Xcode, select your device as the run destination (instead of a Simulator).
-3. Open **Signing & Capabilities** for the Nurture target and set **Team** to your personal Apple ID. If the project has a hardcoded team and you see signing errors, change it to your own.
-4. Build and run (⌘R).
-5. On first run, if the app fails to launch: go to **Settings → General → VPN & Device Management** on your device, trust your developer certificate, then try again.
+1. **Enable Developer Mode** on your iPhone (required on iOS 16+): **Settings → Privacy & Security → Developer Mode** → turn on. Your device will restart.
+2. Connect your iPhone to your Mac via USB.
+3. In Xcode, select your device as the run destination (instead of a Simulator).
+4. Open **Signing & Capabilities** for the Nurture target and set **Team** to your personal Apple ID. If the project has a hardcoded team and you see signing errors, change it to your own.
+5. Build and run (⌘R).
+6. On first run, if the app fails to launch: go to **Settings → General → VPN & Device Management** on your device, trust your developer certificate, then try again.
 
 ### Limitations (free Apple ID)
 
@@ -72,6 +73,8 @@ See [README.md](README.md) for PRD mapping and architecture details.
 
 ## Troubleshooting
 
+- **"The app identifier cannot be registered" / "No provisioning profiles found"**: Change the bundle ID to something unique to you. In Xcode: Nurture target → **Signing & Capabilities** → **Bundle Identifier** → set to e.g. `com.yourfirstname.nurture` or `com.yourcompany.nurture` (use a reversed domain you own or a unique string). Ensure **Team** is set to your Apple ID.
+- **App won't run on device / "Developer Mode required"**: On iOS 16+, enable **Settings → Privacy & Security → Developer Mode**. Your device will restart.
 - **Build fails**: Ensure you use relative paths; avoid absolute paths in project settings. Check signing (Team) if running on a device.
 - **Simulator issues**: Reset Simulator (Device → Erase All Content and Settings) if the app behaves oddly.
 - **Demo mode**: Toggle `useDemoMode` in `Constants.swift` or via build setting if configured.

@@ -18,7 +18,7 @@ protocol SecureStorageProtocol {
 
 /// Keychain-backed secure storage.
 final class KeychainSecureStorage: SecureStorageProtocol {
-    private let service = Bundle.main.bundleIdentifier ?? "com.nurture.app"
+    private let service = Bundle.main.bundleIdentifier ?? "dev.nurture.ios"
 
     func save(_ data: Data, forKey key: String) throws {
         try delete(forKey: key)
