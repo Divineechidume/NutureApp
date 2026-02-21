@@ -32,7 +32,7 @@ struct MainTabView: View {
     @StateObject private var homeController: HomeController
     @StateObject private var historyController: HistoryController
     @StateObject private var settingsController = SettingsController()
-    @StateObject private var notificationService = NotificationService()
+    @EnvironmentObject private var notificationService: NotificationService
 
     @State private var selectedTab: MainTab = .home
 
@@ -49,18 +49,17 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService)
+                    AnyView(HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService))
                 case .history:
-                    HistoryView(controller: historyController)
+                    AnyView(HistoryView(controller: historyController))
                 case .settings:
-                    SettingsView(
+                    AnyView(SettingsView(
                         controller: settingsController,
                         homeController: homeController,
                         householdService: householdService,
                         childrenStore: childrenStore,
-                        rolloverAlertState: rolloverAlertState,
-                        notificationService: notificationService
-                    )
+                        rolloverAlertState: rolloverAlertState
+                    ))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

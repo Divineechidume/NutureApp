@@ -25,4 +25,5 @@ protocol NotificationServiceProtocol: AnyObject {
     func requestPermission(completion: @escaping (Bool) -> Void)
     func sendRolloverAlert(childName: String, rolloverTime: Date)
     func sendConnectionLostAlert()
+    func sendSleepPrediction(childName: String, predictedTime: Date)
 }
