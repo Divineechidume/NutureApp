@@ -19,8 +19,8 @@ float runningAverage() {
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial)
-    ;
+  // while (!Serial)
+  //   ;
 
   pinMode(LED_BUILTIN, OUTPUT);
 
