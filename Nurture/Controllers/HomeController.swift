@@ -19,9 +19,11 @@ final class HomeController: ObservableObject {
     @Published var todaysNapsDuration: TimeInterval = 0
     @Published var todaysNapCount: Int = 0
     @Published var napPrediction: NapPrediction?
+    @Published var sleepRecommendation: SleepRecommendation?
     @Published var child: Child?
 
     private let childrenStore: ChildrenStore?
+    private let aiSleepRecService = AISleepRecommendationService()
     private var cancellable: AnyCancellable?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
@@ -120,6 +122,12 @@ final class HomeController: ObservableObject {
             suggestedTime: Calendar.current.date(byAdding: .hour, value: 2, to: Date()) ?? Date(),
             confidence: .high,
             message: "Likely ready for a nap around 2:00 PM"
+        )
+        sleepRecommendation = aiSleepRecService.recommendation(
+            for: child,
+            lastNightTotalSeconds: lastNightTotalDuration,
+            todaysNapsSeconds: todaysNapsDuration,
+            isCurrentlyAsleep: isAsleep
         )
     }
 }

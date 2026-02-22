@@ -75,6 +75,9 @@ struct HomeView: View {
                     value: nap.message
                 )
             }
+            if let rec = controller.sleepRecommendation {
+                SleepRecommendationCard(recommendation: rec)
+            }
         }
         .padding(.horizontal, Spacing.md)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isAsleep)
@@ -227,6 +230,70 @@ struct InfoCard: View {
     }
 }
 
+// MARK: - AI Sleep Recommendation Card
+
+struct SleepRecommendationCard: View {
+    let recommendation: SleepRecommendation
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
+
+    private var iconName: String {
+        switch recommendation.category {
+        case .bedtime: return "moon.stars.fill"
+        case .routine: return "sparkles"
+        case .rest: return "heart.fill"
+        case .pattern: return "chart.line.uptrend.xyaxis"
+        }
+    }
+
+    private var iconColor: Color {
+        switch recommendation.category {
+        case .bedtime: return Color(hex: "6366F1")
+        case .routine: return Color(hex: "8B5CF6")
+        case .rest: return Color(hex: "EC4899")
+        case .pattern: return Color.sageGreen
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: iconName)
+                    .font(.system(size: 18))
+                    .foregroundColor(iconColor)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(iconColor.opacity(0.15)))
+                Text(recommendation.title)
+                    .font(.labelSmall)
+                    .foregroundColor(.textSecondary)
+                Spacer()
+            }
+            Text(recommendation.message)
+                .font(.bodyMedium)
+                .foregroundColor(.textPrimary)
+            if let bedtime = recommendation.suggestedBedtime {
+                Text("Suggested: \(Self.timeFormatter.string(from: bedtime))")
+                    .font(.labelSmall)
+                    .foregroundColor(iconColor)
+            }
+        }
+        .padding(Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.small)
+                .fill(Color.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.small)
+                        .stroke(iconColor.opacity(0.3), lineWidth: 1)
+                )
+                .cardShadowSecondary()
+        )
+    }
+}
+
 // MARK: - No Device Paired Empty State
 
 struct NoDevicePairedView: View {
@@ -267,3 +334,4 @@ struct NoDevicePairedView: View {
         .background(Color.cream)
     }
 }
+
