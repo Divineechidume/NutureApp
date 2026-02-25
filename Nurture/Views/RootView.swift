@@ -49,55 +49,16 @@ struct RootView: View {
         .onAppear { presentedNotification = notificationService.incomingNotification }
         .onReceive(notificationService.$incomingNotification) { new in presentedNotification = new }
         .sheet(item: $presentedNotification) { payload in
-            // Use the NotificationService instance to build the presentation model
             let presentation = notificationService.presentation(from: payload)
-            NavigationView {
-                VStack(alignment: .center, spacing: Spacing.md) {
-                    Text(presentation.displayTitle)
-                        .font(.displayMedium)
-                        .foregroundColor(.textPrimary)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, Spacing.lg)
-
-                    Text(relativeTimeLabel(for: presentation.timestamp))
-                        .font(.labelSmall)
-                        .foregroundColor(.textSecondary)
-
-                    Text(presentation.displayBody)
-                        .font(.bodyMedium)
-                        .foregroundColor(.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Spacing.md)
-
-                    Spacer()
-
-                    Button(action: { notificationService.incomingNotification = nil; presentedNotification = nil }) {
-                        Text("Done")
-                            .font(.labelLarge)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Spacing.sm)
-                            .background(RoundedRectangle(cornerRadius: CornerRadius.small).fill(Color.sageGreen))
-                            .padding(.horizontal, Spacing.md)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.bottom, Spacing.xl)
+            NotificationDetailView(
+                displayTitle: presentation.displayTitle,
+                displayBody: presentation.displayBody,
+                timestamp: presentation.timestamp,
+                onDismiss: {
+                    notificationService.incomingNotification = nil
+                    presentedNotification = nil
                 }
-                .background(Color.cream.ignoresSafeArea())
-                .navigationTitle("Notification")
-                .navigationBarTitleDisplayMode(.inline)
-            }
+            )
         }
     }
-}
-
-// Helper: relative time label used by the sheet
-private func relativeTimeLabel(for date: Date?) -> String {
-    guard let date = date else { return "" }
-    let delta = Int(Date().timeIntervalSince(date))
-    if delta < 60 { return "Just now" }
-    if delta < 3600 { return "\(delta / 60)m ago" }
-    if delta < 86400 { return "\(delta / 3600)h ago" }
-    // Use DateDisplayStyle for days and beyond
-    return date.formatted(as: .dateLabel)
 }

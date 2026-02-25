@@ -44,25 +44,28 @@ struct MainTabView: View {
         _historyController = StateObject(wrappedValue: HistoryController(childrenStore: childrenStore))
     }
 
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .home:
+            HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService)
+        case .history:
+            HistoryView(controller: historyController)
+        case .settings:
+            SettingsView(
+                controller: settingsController,
+                homeController: homeController,
+                householdService: householdService,
+                childrenStore: childrenStore,
+                rolloverAlertState: rolloverAlertState
+            )
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                switch selectedTab {
-                case .home:
-                    AnyView(HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService))
-                case .history:
-                    AnyView(HistoryView(controller: historyController))
-                case .settings:
-                    AnyView(SettingsView(
-                        controller: settingsController,
-                        homeController: homeController,
-                        householdService: householdService,
-                        childrenStore: childrenStore,
-                        rolloverAlertState: rolloverAlertState
-                    ))
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            tabContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             CustomTabBar(selectedTab: $selectedTab)
         }

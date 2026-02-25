@@ -185,10 +185,16 @@ final class NotificationService: NSObject, ObservableObject, NotificationService
         }
     }
 
-    /// Convenience method used by Settings → Test Alert; reuses the rollover API so behavior is identical.
-    func sendSleepTestNotification(after seconds: TimeInterval = 1, childName: String? = nil) {
+    /// Convenience method used by Settings → Test Alert. Schedules a rollover alert so the test
+    /// exercise the same code path as a real event.
+    ///
+    /// - Parameters:
+    ///   - seconds: Delay before delivery. The system requires a minimum of 1 second for
+    ///     `UNTimeIntervalNotificationTrigger`; values below 1 are clamped automatically via
+    ///     `max(1, seconds)` in `scheduleLocalNotification`.
+    ///   - childName: Name displayed in the notification. Defaults to "Baby".
+    func sendRolloverTestNotification(after seconds: TimeInterval = 1, childName: String? = nil) {
         let name = childName ?? "Baby"
-        // Use protocol method to ensure permission is requested; schedule after the requested delay.
         requestPermission { granted in
             DispatchQueue.main.async {
                 if granted {

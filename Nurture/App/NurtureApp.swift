@@ -15,10 +15,7 @@ struct NurtureApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @StateObject private var notificationService = NotificationService.shared
 
-    init() {
-        // NotificationService registers itself as UNUserNotificationCenter.delegate in its initializer.
-    }
-
+    // NotificationService registers itself as UNUserNotificationCenter.delegate in its initializer.
     var body: some Scene {
         WindowGroup {
             RootView(hasCompletedOnboarding: $hasCompletedOnboarding)

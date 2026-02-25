@@ -48,6 +48,17 @@ struct NotificationDetailView: View {
     }
 }
 
+// MARK: - Helpers
+
+private func relativeTimeLabel(for date: Date?) -> String {
+    guard let date = date else { return "" }
+    let delta = Int(Date().timeIntervalSince(date))
+    if delta < 60 { return "Just now" }
+    if delta < 3600 { return "\(delta / 60)m ago" }
+    if delta < 86400 { return "\(delta / 3600)h ago" }
+    return date.formatted(as: .dateLabel)
+}
+
 #if DEBUG
 struct NotificationDetailView_Previews: PreviewProvider {
     static var previews: some View {

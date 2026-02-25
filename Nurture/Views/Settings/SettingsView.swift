@@ -288,7 +288,7 @@ struct SettingsView: View {
                         notificationService.requestPermission { granted in
                             DispatchQueue.main.async {
                                 if granted {
-                                    notificationService.sendSleepTestNotification(after: 1, childName: childName)
+                                    notificationService.sendRolloverTestNotification(after: 1, childName: childName)
                                 } else {
                                     showNotificationsDeniedAlert = true
                                 }
