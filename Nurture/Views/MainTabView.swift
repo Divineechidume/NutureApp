@@ -32,7 +32,7 @@ struct MainTabView: View {
     @StateObject private var homeController: HomeController
     @StateObject private var historyController: HistoryController
     @StateObject private var settingsController = SettingsController()
-    @StateObject private var notificationService = NotificationService()
+    @EnvironmentObject private var notificationService: NotificationService
 
     @State private var selectedTab: MainTab = .home
 
@@ -58,8 +58,7 @@ struct MainTabView: View {
                         homeController: homeController,
                         householdService: householdService,
                         childrenStore: childrenStore,
-                        rolloverAlertState: rolloverAlertState,
-                        notificationService: notificationService
+                        rolloverAlertState: rolloverAlertState
                     )
                 }
             }

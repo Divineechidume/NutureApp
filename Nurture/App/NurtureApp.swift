@@ -11,10 +11,14 @@ import SwiftUI
 @main
 struct NurtureApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    
+    @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
+    // NotificationService registers itself as UNUserNotificationCenter.delegate in its initializer.
+    @StateObject private var notificationService = NotificationService.shared
+
     var body: some Scene {
         WindowGroup {
             RootView(hasCompletedOnboarding: $hasCompletedOnboarding)
+                .environmentObject(notificationService)
         }
     }
 }

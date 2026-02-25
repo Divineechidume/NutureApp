@@ -77,10 +77,11 @@ protocol BluetoothServiceProtocol: ObservableObject where ObjectWillChangePublis
     func disconnectCurrentDevice()
 }
 
-/// Protocol for notifications (rollover, connection lost).
+/// Protocol for notifications (rollover, sleep prediction, connection lost).
 /// Implementations: NotificationService (real), mock for tests.
 protocol NotificationServiceProtocol: AnyObject {
     func requestPermission(completion: @escaping (Bool) -> Void)
     func sendRolloverAlert(childName: String, rolloverTime: Date)
     func sendConnectionLostAlert()
+    func sendSleepPrediction(childName: String, predictedTime: Date)
 }
