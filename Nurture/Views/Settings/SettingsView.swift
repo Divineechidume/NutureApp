@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - Section Header
 
@@ -121,7 +122,19 @@ struct SettingsView: View {
     @ObservedObject var householdService: HouseholdService
     @ObservedObject var childrenStore: ChildrenStore
     @ObservedObject var rolloverAlertState: RolloverAlertState
-    @ObservedObject var notificationService: NotificationService
+
+    @EnvironmentObject private var notificationService: NotificationService
+
+    @State private var showNotificationsDeniedAlert: Bool = false
+
+    // Explicit initializer to avoid compiler generic-inference issues with synthesized memberwise init.
+    init(controller: SettingsController, homeController: HomeController, householdService: HouseholdService, childrenStore: ChildrenStore, rolloverAlertState: RolloverAlertState) {
+        self.controller = controller
+        self.homeController = homeController
+        self.householdService = householdService
+        self.childrenStore = childrenStore
+        self.rolloverAlertState = rolloverAlertState
+    }
 
     var body: some View {
         NavigationView {
@@ -147,6 +160,16 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("Notifications disabled", isPresented: $showNotificationsDeniedAlert) {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Enable notifications in Settings to receive alerts from Nurture.")
+            }
         }
     }
 
@@ -259,12 +282,50 @@ struct SettingsView: View {
                 VStack(spacing: 0) {
                     SettingsToggleRow(icon: "bell", title: "Rollover alerts", isOn: $controller.rolloverAlertsEnabled)
                     SettingsDivider()
-                    SettingsToggleRow(icon: "lightbulb", title: "Nap predictions", isOn: $controller.napPredictionsEnabled)
-                }
-            }
-        }
-        .padding(.horizontal, Spacing.md)
-    }
+                    // Test Rollover Alert: schedule a rollover-style notification (reuses live alert behavior)
+                    Button {
+                        let childName = childrenStore.selectedChild?.name
+                        notificationService.requestPermission { granted in
+                            DispatchQueue.main.async {
+                                if granted {
+                                    notificationService.sendRolloverTestNotification(after: 1, childName: childName)
+                                } else {
+                                    showNotificationsDeniedAlert = true
+                                }
+                            }
+                        }
+                     } label: {
+                         SettingsRow(icon: "bell.badge", title: "Test Rollover Alert")
+                     }
+                     .buttonStyle(.plain)
+                     SettingsDivider()
+                     // Nap predictions toggle (keep this above the Test Sleep Prediction button per UI preference)
+                     SettingsToggleRow(icon: "lightbulb", title: "Nap predictions", isOn: $controller.napPredictionsEnabled)
+                     SettingsDivider()
+
+                     // Test Sleep Prediction: schedule a sleep prediction notification. The in-app sheet will open when the user taps the system notification.
+                     Button {
+                         let name = childrenStore.selectedChild?.name ?? "Baby"
+                         let predicted = Date()
+                         notificationService.requestPermission { granted in
+                             DispatchQueue.main.async {
+                                 if granted {
+                                     notificationService.sendSleepPrediction(childName: name, predictedTime: predicted)
+                                 } else {
+                                     showNotificationsDeniedAlert = true
+                                 }
+                             }
+                         }
+                     } label: {
+                         SettingsRow(icon: "bed.double.fill", title: "Test Sleep Prediction")
+                     }
+                     .buttonStyle(.plain)
+                     SettingsDivider()
+                 }
+             }
+         }
+         .padding(.horizontal, Spacing.md)
+     }
 
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: 0) {

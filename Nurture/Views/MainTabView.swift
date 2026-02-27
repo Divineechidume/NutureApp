@@ -32,7 +32,7 @@ struct MainTabView: View {
     @StateObject private var homeController: HomeController
     @StateObject private var historyController: HistoryController
     @StateObject private var settingsController = SettingsController()
-    @StateObject private var notificationService = NotificationService()
+    @EnvironmentObject private var notificationService: NotificationService
 
     @State private var selectedTab: MainTab = .home
 
@@ -44,26 +44,28 @@ struct MainTabView: View {
         _historyController = StateObject(wrappedValue: HistoryController(childrenStore: childrenStore))
     }
 
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .home:
+            HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService)
+        case .history:
+            HistoryView(controller: historyController)
+        case .settings:
+            SettingsView(
+                controller: settingsController,
+                homeController: homeController,
+                householdService: householdService,
+                childrenStore: childrenStore,
+                rolloverAlertState: rolloverAlertState
+            )
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                switch selectedTab {
-                case .home:
-                    HomeView(controller: homeController, childrenStore: childrenStore, householdService: householdService)
-                case .history:
-                    HistoryView(controller: historyController)
-                case .settings:
-                    SettingsView(
-                        controller: settingsController,
-                        homeController: homeController,
-                        householdService: householdService,
-                        childrenStore: childrenStore,
-                        rolloverAlertState: rolloverAlertState,
-                        notificationService: notificationService
-                    )
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            tabContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             CustomTabBar(selectedTab: $selectedTab)
         }
