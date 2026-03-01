@@ -13,7 +13,7 @@ import Combine
 final class HomeController: ObservableObject {
     // MARK: - Published State
 
-    @Published var isAsleep: Bool = true
+    @Published var isAsleep: Bool = false
     @Published var sleepStartDate: Date?
     @Published var lastNightTotalDuration: TimeInterval = 0
     @Published var todaysNapsDuration: TimeInterval = 0
@@ -149,6 +149,9 @@ final class HomeController: ObservableObject {
     /// Uses only simple duration-style inputs so the Home screen always shows
     /// a useful "next nap" and "tonight's suggestion" card.
     private func seedMockPredictionIfNeeded() {
+        // TEST MODE: Force awake for nap prediction visibility
+        isAsleep = false
+
         // Ensure we have a child profile to derive age range from.
         if child == nil {
             if let store = childrenStore {
