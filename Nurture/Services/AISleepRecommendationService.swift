@@ -26,7 +26,7 @@ final class AISleepRecommendationService {
         isCurrentlyAsleep: Bool
     ) -> SleepRecommendation? {
         // Mock: pick one recommendation; in real implementation would score/rank by context.
-        let ageRange = child?.ageRange ?? .sixToTwelveMonths
+
         let lastNightHours = lastNightTotalSeconds / 3600
         let napsHours = todaysNapsSeconds / 3600
 
