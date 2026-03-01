@@ -58,6 +58,8 @@ final class HomeController: ObservableObject {
         if useDemoMode {
             // Demo: fully mocked data for UI previews and simulator
             loadMockData()
+            // TEST MODE: Keep child awake for nap prediction visibility
+            seedMockPredictionIfNeeded()
         } else {
             // Non‑demo: until Bluetooth / sleep detection are wired,
             // seed lightweight mock data so Home still shows nap prediction
@@ -102,8 +104,9 @@ final class HomeController: ObservableObject {
         } else {
             // Until real data is integrated, refresh keeps the mock-backed
             // prediction and recommendation up to date.
-            seedMockPredictionIfNeeded()
         }
+        // TEST MODE: Keep child awake for nap prediction visibility
+        seedMockPredictionIfNeeded()
         // Integration point: Pull latest from BluetoothService / cache when not in demo mode.
         // TODO: Pull latest from BluetoothService / cache. PRD Section 2 - pull-to-refresh.
     }
@@ -122,7 +125,6 @@ final class HomeController: ObservableObject {
             let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
             child = Child(name: mockChildName, birthdate: birthdate, ageRange: AgeRange.from(birthdate: birthdate))
         }
-        isAsleep = !demoShowAwake
         var components = DateComponents()
         components.hour = -2
         components.minute = -15
@@ -149,7 +151,7 @@ final class HomeController: ObservableObject {
     /// Uses only simple duration-style inputs so the Home screen always shows
     /// a useful "next nap" and "tonight's suggestion" card.
     private func seedMockPredictionIfNeeded() {
-        // TEST MODE: Force awake for nap prediction visibility
+        // TEST MODE: Keep child awake for nap prediction visibility
         isAsleep = false
 
         // Ensure we have a child profile to derive age range from.
