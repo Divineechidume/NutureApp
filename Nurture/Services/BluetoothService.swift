@@ -63,6 +63,12 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
     private let scanTimeoutSeconds: TimeInterval = 10
     private let connectTimeoutSeconds: TimeInterval = 8
 
+    /// Last angle (0–180) from characteristic 2101. Used to detect transition to "on stomach" for rollover.
+    private var lastAngleFromDevice: Int?
+
+    /// When true, first discovered Nurture device is auto-connected (for demo: test flip → notification without pairing UI).
+    private var autoConnectFirstDiscovered = false
+
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: .main)
@@ -106,6 +112,12 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
         print("Scanning for devices...")
 
         scheduleScanTimeout()
+    }
+
+    /// Scan and connect to the first Nurture device found. Use from Settings → Demo to test flip → notification without going through pairing UI.
+    func scanAndConnectToFirstDevice() {
+        autoConnectFirstDiscovered = true
+        scanForDevices()
     }
 
     /// Connect to selected device. Handle timeout and "already paired elsewhere". PRD Section 1.
@@ -183,7 +195,17 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
     // Dependencies: NotificationService, SleepDetectionService (optional)
     // Estimated complexity: High
 
-    // MARK: - Connection Monitoring (PRD Section 4)
+    // MARK: - Connection Monitoring & Rollover (PRD Section 4)
+
+    /// Called when rollover is detected (angle crosses threshold on 2101, or firmware sends on 2301). Set by app to trigger notification + full-screen alert.
+    var onRolloverDetected: ((Date) -> Void)?
+
+    /// Call to simulate a rollover event (e.g. from Settings → Demo). Fires the same path as real BLE: onRolloverDetected → notification + full-screen alert.
+    func simulateRolloverForTesting() {
+        DispatchQueue.main.async { [weak self] in
+            self?.onRolloverDetected?(Date())
+        }
+    }
 
     // TODO: Implement connection monitoring
     // Purpose: Alert user if connection lost. PRD Section 4 edge cases.
@@ -330,6 +352,16 @@ extension BluetoothService: CBCentralManagerDelegate {
     ) {
         print("centralManager:didDiscover: \(peripheral.name ?? "Unknown")")
         upsertDiscoveredBand(from: peripheral, rssi: RSSI)
+
+        if autoConnectFirstDiscovered, let device = discoveredDevices.first(where: { $0.peripheralIdentifier == peripheral.identifier }) {
+            autoConnectFirstDiscovered = false
+            if isScanning {
+                centralManager?.stopScan()
+                isScanning = false
+                invalidateScanTimeout()
+            }
+            connectToDevice(device)
+        }
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
@@ -370,6 +402,7 @@ extension BluetoothService: CBCentralManagerDelegate {
         isConnecting = false
         pendingConnectPeripheralIdentifier = nil
         markBandConnected(peripheralIdentifier: peripheral.identifier, isConnected: false)
+        lastAngleFromDevice = nil
 
         if wasConnecting {
             setPairingFailure(.connectionFailed(error?.localizedDescription))
@@ -447,15 +480,19 @@ extension BluetoothService: CBPeripheralDelegate {
         guard let value = characteristic.value else { return }
 
         if characteristic.uuid == angleCharacteristicUUID {
-            // Arduino sends BLEUnsignedCharCharacteristic ("2101") for angle.
+            // Arduino sends angle 0–180 on "2101". Firmware uses angle > 140 as "BOARD FLIPPED"; we detect rollover the same way.
             guard let angleByte = value.first else { return }
             let angle = Int(angleByte)
+            let threshold = rolloverAngleThresholdDegrees
+            let wasBelowThreshold = lastAngleFromDevice == nil || lastAngleFromDevice! < threshold
+            lastAngleFromDevice = angle
 
-            // TODO: Route to a published sensor/debug state or a processing service.
-            print("Angle: \(angle)°")
-
-            // Example future behavior:
-            // if angle > 140 { rollover detected candidate }
+            // Rollover = transition from "on back" (angle below threshold) to "on stomach" (angle >= threshold).
+            if wasBelowThreshold, angle >= threshold {
+                DispatchQueue.main.async { [weak self] in
+                    self?.onRolloverDetected?(Date())
+                }
+            }
             return
         }
 
@@ -466,8 +503,13 @@ extension BluetoothService: CBPeripheralDelegate {
         }
 
         if characteristic.uuid == rolloverCharacteristicUUID {
-            // TODO: Parse rollover event payload when firmware adds this characteristic
-            print("Received rollover payload (\(value.count) bytes)")
+            // Wearable sends a rollover event (e.g. 0x01 or any non-empty payload). PRD §4: trigger alert via callback.
+            guard !value.isEmpty else { return }
+            // Optional: firmware may send 0x01 = rollover; ignore 0x00 or other codes if needed.
+            let rolloverTime = Date()
+            DispatchQueue.main.async { [weak self] in
+                self?.onRolloverDetected?(rolloverTime)
+            }
             return
         }
 

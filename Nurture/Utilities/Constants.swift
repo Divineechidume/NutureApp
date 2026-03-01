@@ -77,3 +77,7 @@ enum AgeRange: String, CaseIterable, Identifiable, Codable {
 
 /// Max one rollover alert per this many minutes unless dismissed (avoid spam).
 let rolloverAlertThrottleMinutes = 5
+
+/// Angle (degrees, 0–180) above which we consider baby on stomach (rollover). Matches firmware: angle > 140 → "BOARD FLIPPED".
+/// App detects rollover when angle crosses from below this to at-or-above this (from angle stream on characteristic 2101).
+let rolloverAngleThresholdDegrees = 140
