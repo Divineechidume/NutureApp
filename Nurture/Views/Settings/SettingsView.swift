@@ -122,18 +122,19 @@ struct SettingsView: View {
     @ObservedObject var householdService: HouseholdService
     @ObservedObject var childrenStore: ChildrenStore
     @ObservedObject var rolloverAlertState: RolloverAlertState
+    @ObservedObject var bluetoothService: BluetoothService
 
     @EnvironmentObject private var notificationService: NotificationService
 
     @State private var showNotificationsDeniedAlert: Bool = false
 
-    // Explicit initializer to avoid compiler generic-inference issues with synthesized memberwise init.
-    init(controller: SettingsController, homeController: HomeController, householdService: HouseholdService, childrenStore: ChildrenStore, rolloverAlertState: RolloverAlertState) {
+    init(controller: SettingsController, homeController: HomeController, householdService: HouseholdService, childrenStore: ChildrenStore, rolloverAlertState: RolloverAlertState, bluetoothService: BluetoothService) {
         self.controller = controller
         self.homeController = homeController
         self.householdService = householdService
         self.childrenStore = childrenStore
         self.rolloverAlertState = rolloverAlertState
+        self.bluetoothService = bluetoothService
     }
 
     var body: some View {
@@ -401,9 +402,32 @@ struct SettingsView: View {
                         rolloverAlertState.presentRollover(childName: name, time: time)
                         notificationService.sendRolloverAlert(childName: name, rolloverTime: time)
                     } label: {
-                        SettingsRow(icon: "exclamationmark.triangle", title: "Simulate rollover")
+                        SettingsRow(icon: "exclamationmark.triangle", title: "Simulate rollover (UI only)")
                     }
                     .buttonStyle(.plain)
+                    SettingsDivider()
+                    Button {
+                        bluetoothService.simulateRolloverForTesting()
+                    } label: {
+                        SettingsRow(icon: "antenna.radiowaves.left.and.right", title: "Simulate BLE rollover (full path)")
+                    }
+                    .buttonStyle(.plain)
+                    SettingsDivider()
+                    Button {
+                        bluetoothService.scanAndConnectToFirstDevice()
+                    } label: {
+                        SettingsRow(icon: "link", title: "Connect to first Nurture device (test BLE)")
+                    }
+                    .buttonStyle(.plain)
+                    if bluetoothService.isScanning {
+                        Text("Scanning…")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else if let device = bluetoothService.connectedDevice {
+                        Text("Connected: \(device.name)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                     SettingsDivider()
                     Button {
                         UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")

@@ -8,15 +8,42 @@
 import SwiftUI
 
 /// Holds the active rollover alert to show app-wide. Set when rollover is received (BLE or demo trigger); clear on dismiss.
+/// Enforces PRD: max 1 alert per 5 minutes unless dismissed.
 final class RolloverAlertState: ObservableObject {
     @Published var activeRollover: (childName: String, time: Date)?
 
+    /// Last time we showed/sent a rollover alert; used for throttle. Cleared on dismiss so next rollover can alert within 5 min.
+    private var lastRolloverAlertTime: Date?
+
+    /// Presents the full-screen rollover alert (demo or after throttle check). Does not send push; caller sends notification when appropriate.
     func presentRollover(childName: String, time: Date) {
         activeRollover = (childName: childName, time: time)
     }
 
+    /// Handles rollover event from BLE: throttle check, then sends notification and presents full-screen alert.
+    func handleRolloverFromBLE(
+        childName: String,
+        time: Date,
+        alertsEnabled: Bool,
+        notificationService: NotificationServiceProtocol
+    ) {
+        guard alertsEnabled else { return }
+
+        let throttleInterval = TimeInterval(rolloverAlertThrottleMinutes * 60)
+        let now = Date()
+        if let last = lastRolloverAlertTime, now.timeIntervalSince(last) < throttleInterval {
+            return
+        }
+
+        lastRolloverAlertTime = time
+        notificationService.sendRolloverAlert(childName: childName, rolloverTime: time)
+        presentRollover(childName: childName, time: time)
+    }
+
+    /// Dismisses the full-screen alert and resets throttle so the next rollover can trigger within 5 min (PRD: "unless dismissed").
     func dismiss() {
         activeRollover = nil
+        lastRolloverAlertTime = nil
     }
 }
 

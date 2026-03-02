@@ -2,7 +2,7 @@
 //  MainTabView.swift
 //  Nurture
 //
-//  Tab bar: Home, History, Settings. Custom elevated design. PRD Section 2, 3, 6.
+//  Tab bar: Home, History, Settings. Custom elevated design. PRD Section 2, 3, 4, 6.
 //
 
 import SwiftUI
@@ -25,6 +25,7 @@ enum MainTab: String, CaseIterable, Identifiable {
 
 /// Main tab container with custom elevated tab bar. Home | History | Settings.
 struct MainTabView: View {
+    @ObservedObject var bluetoothService: BluetoothService
     @ObservedObject var rolloverAlertState: RolloverAlertState
     @ObservedObject var householdService: HouseholdService
     @ObservedObject var childrenStore: ChildrenStore
@@ -36,7 +37,13 @@ struct MainTabView: View {
 
     @State private var selectedTab: MainTab = .home
 
-    init(rolloverAlertState: RolloverAlertState, householdService: HouseholdService, childrenStore: ChildrenStore) {
+    init(
+        bluetoothService: BluetoothService,
+        rolloverAlertState: RolloverAlertState,
+        householdService: HouseholdService,
+        childrenStore: ChildrenStore
+    ) {
+        self.bluetoothService = bluetoothService
         self.rolloverAlertState = rolloverAlertState
         self.householdService = householdService
         self.childrenStore = childrenStore
@@ -57,7 +64,8 @@ struct MainTabView: View {
                 homeController: homeController,
                 householdService: householdService,
                 childrenStore: childrenStore,
-                rolloverAlertState: rolloverAlertState
+                rolloverAlertState: rolloverAlertState,
+                bluetoothService: bluetoothService
             )
         }
     }
@@ -69,7 +77,22 @@ struct MainTabView: View {
 
             CustomTabBar(selectedTab: $selectedTab)
         }
-        .onAppear { childrenStore.load() }
+        .onAppear {
+            childrenStore.load()
+            // PRD §4: When BLE reports rollover, trigger notification + full-screen alert (respects Rollover alerts toggle and throttle).
+            bluetoothService.onRolloverDetected = { [weak rolloverAlertState, weak childrenStore, weak settingsController, weak notificationService] time in
+                guard let rolloverAlertState, let childrenStore, let settingsController, let notificationService else { return }
+                DispatchQueue.main.async {
+                    let name = childrenStore.selectedChild?.name ?? "Baby"
+                    rolloverAlertState.handleRolloverFromBLE(
+                        childName: name,
+                        time: time,
+                        alertsEnabled: settingsController.rolloverAlertsEnabled,
+                        notificationService: notificationService
+                    )
+                }
+            }
+        }
         .ignoresSafeArea(.keyboard)
     }
 }

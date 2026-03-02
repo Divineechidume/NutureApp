@@ -35,6 +35,7 @@ struct RootView: View {
         Group {
             if hasCompletedOnboarding {
                 MainTabView(
+                    bluetoothService: bluetoothService,
                     rolloverAlertState: rolloverAlertState,
                     householdService: householdService,
                     childrenStore: childrenStore
