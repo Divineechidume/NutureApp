@@ -51,11 +51,47 @@ struct PairDeviceView: View {
                 if controller.isPairing {
                     HStack {
                         ProgressView()
-                        Text("Searching for device…")
+                        Text(controller.isConnecting ? "Connecting…" : "Searching for device…")
                             .font(DesignTokens.captionFont())
                             .foregroundColor(DesignTokens.textSecondary)
                     }
                     .padding()
+                }
+
+                // Discovered devices list: show and allow Connect; optional Stop searching.
+                if !controller.discoveredDevices.isEmpty {
+                    Text("Available devices")
+                        .font(DesignTokens.captionFont())
+                        .foregroundColor(DesignTokens.textSecondary)
+
+                    ForEach(controller.discoveredDevices) { device in
+                        HStack {
+                            Text(device.name)
+                                .font(DesignTokens.bodyFont())
+                                .foregroundColor(DesignTokens.textPrimary)
+                            Spacer()
+                            Button(device.isConnected ? "Connected" : "Connect") {
+                                controller.connect(to: device)
+                            }
+                            .font(DesignTokens.captionFont())
+                            .foregroundColor(DesignTokens.sageGreen)
+                            .disabled(device.isConnected || controller.isConnecting)
+                        }
+                        .padding(.vertical, DesignTokens.spacingSM)
+                        .padding(.horizontal, DesignTokens.spacingMD)
+                        .background(Color.white.opacity(0.8))
+                        .overlay(RoundedRectangle(cornerRadius: CornerRadius.small).stroke(DesignTokens.textSecondary.opacity(0.3), lineWidth: 1))
+                        .cornerRadius(CornerRadius.small)
+                    }
+
+                    if controller.isPairing {
+                        Button("Stop searching") {
+                            controller.stopScanning()
+                        }
+                        .font(DesignTokens.captionFont())
+                        .foregroundColor(DesignTokens.textSecondary)
+                        .padding(.top, DesignTokens.spacingSM)
+                    }
                 }
 
                 if let error = controller.pairingError {
