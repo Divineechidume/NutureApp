@@ -84,12 +84,14 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
     /// Scan for Nurture wearables in range. Show list if multiple. PRD Section 1 edge cases.
     func scanForDevices() {
         guard let centralManager else {
+            autoConnectFirstDiscovered = false
             setPairingFailure(.bluetoothUnavailable)
             print("Bluetooth not available")
             return
         }
 
         guard centralManager.state == .poweredOn else {
+            autoConnectFirstDiscovered = false
             setPairingFailure(.bluetoothUnavailable)
             print("Bluetooth not powered on")
             return
@@ -163,6 +165,7 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
         guard let centralManager else { return }
         centralManager.stopScan()
         isScanning = false
+        autoConnectFirstDiscovered = false
         invalidateScanTimeout()
 
         if discoveredDevices.isEmpty {
@@ -226,6 +229,7 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
 
             centralManager.stopScan()
             self.isScanning = false
+            self.autoConnectFirstDiscovered = false
 
             if self.discoveredDevices.isEmpty {
                 self.setPairingFailure(.scanTimeout)
@@ -278,6 +282,7 @@ final class BluetoothService: NSObject, ObservableObject, BluetoothServiceProtoc
         pairingState = .failed(error)
         isScanning = false
         isConnecting = false
+        autoConnectFirstDiscovered = false
         invalidateScanTimeout()
         invalidateConnectTimeout()
     }
@@ -368,6 +373,7 @@ extension BluetoothService: CBCentralManagerDelegate {
         invalidateConnectTimeout()
         isConnecting = false
         pendingConnectPeripheralIdentifier = nil
+        autoConnectFirstDiscovered = false
 
         let peripheralID = peripheral.identifier
         markBandConnected(peripheralIdentifier: peripheralID, isConnected: true)
@@ -484,10 +490,12 @@ extension BluetoothService: CBPeripheralDelegate {
             guard let angleByte = value.first else { return }
             let angle = Int(angleByte)
             let threshold = rolloverAngleThresholdDegrees
-            let wasBelowThreshold = lastAngleFromDevice == nil || lastAngleFromDevice! < threshold
+            // Armed state: require at least one prior "safe" reading (< threshold) before we can trigger rollover.
+            // Avoids false positive when connecting while device is already at/above threshold (e.g. band in hand or baby on stomach).
+            let wasBelowThreshold = lastAngleFromDevice != nil && lastAngleFromDevice! < threshold
             lastAngleFromDevice = angle
 
-            // Rollover = transition from "on back" (angle below threshold) to "on stomach" (angle >= threshold).
+            // Rollover = transition from "on back" (below threshold) to "on stomach" (>= threshold).
             if wasBelowThreshold, angle >= threshold {
                 DispatchQueue.main.async { [weak self] in
                     self?.onRolloverDetected?(Date())

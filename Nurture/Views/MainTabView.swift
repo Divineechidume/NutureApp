@@ -80,15 +80,15 @@ struct MainTabView: View {
         .onAppear {
             childrenStore.load()
             // PRD §4: When BLE reports rollover, trigger notification + full-screen alert (respects Rollover alerts toggle and throttle).
-            bluetoothService.onRolloverDetected = { [weak rolloverAlertState, weak childrenStore, weak settingsController] time in
-                guard let rolloverAlertState, let childrenStore, let settingsController else { return }
+            bluetoothService.onRolloverDetected = { [weak rolloverAlertState, weak childrenStore, weak settingsController, weak notificationService] time in
+                guard let rolloverAlertState, let childrenStore, let settingsController, let notificationService else { return }
                 DispatchQueue.main.async {
                     let name = childrenStore.selectedChild?.name ?? "Baby"
                     rolloverAlertState.handleRolloverFromBLE(
                         childName: name,
                         time: time,
                         alertsEnabled: settingsController.rolloverAlertsEnabled,
-                        notificationService: NotificationService.shared
+                        notificationService: notificationService
                     )
                 }
             }

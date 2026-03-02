@@ -31,7 +31,7 @@ final class RolloverAlertState: ObservableObject {
 
         let throttleInterval = TimeInterval(rolloverAlertThrottleMinutes * 60)
         let now = Date()
-        if let last = lastRolloverAlertTime, now.timeIntervalSince(last) < throttleInterval, activeRollover != nil {
+        if let last = lastRolloverAlertTime, now.timeIntervalSince(last) < throttleInterval {
             return
         }
 
