@@ -10,7 +10,7 @@ Firmware for the Nurture ankle wearable (foot band). Streams tilt angle over Blu
 
 | Property            | Value                          |
 | ------------------- | ------------------------------ |
-| Local name          | `Nuture`                       |
+| Local name          | `Nurture`                       |
 | Service UUID        | `1101`                         |
 | Characteristic UUID | `2101` (Read, Notify)          |
 | Angle value         | 0–180 degrees, sent as `uint8` |

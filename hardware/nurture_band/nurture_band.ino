@@ -39,11 +39,11 @@ void setup() {
       ;
   }
 
-  BLE.setLocalName("Nuture");
+  BLE.setLocalName("Nurture");
   BLE.setAdvertisedService(countService);
   countService.addCharacteristic(countLevelChar);
   BLE.addService(countService);
-  BLE.setDeviceName("Nuture");
+  BLE.setDeviceName("Nurture");
 
   BLE.advertise();
   Serial.println("Bluetooth device active, waiting for connections...");
