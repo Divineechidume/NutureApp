@@ -24,4 +24,6 @@ struct NapPrediction {
     var confidence: NapConfidence
     /// User-facing message, e.g. "Likely ready around 2:00 PM" or "Might be ready for a nap soon".
     var message: String
+    /// Human-readable explanation for the prediction (transparency).
+    var reasoning: String
 }

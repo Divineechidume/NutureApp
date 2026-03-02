@@ -30,11 +30,13 @@ final class AISleepRecommendationService {
         let lastNightHours = lastNightTotalSeconds / 3600
         let napsHours = todaysNapsSeconds / 3600
 
+        // Transparency Layer: Show reasoning for AI predictions
         if isCurrentlyAsleep {
             return mockRecommendation(
                 title: "Sleeping peacefully",
                 message: "Your little one is getting good rest. No change needed.",
-                category: .rest
+                category: .rest,
+                reasoning: "Sleep patterns look healthy and consistent with age recommendations."
             )
         }
 
@@ -48,7 +50,8 @@ final class AISleepRecommendationService {
                 title: "Tonight's suggestion",
                 message: "Based on last night's sleep, an earlier bedtime around 7:30 PM might help.",
                 suggestedBedtime: suggested,
-                category: .bedtime
+                category: .bedtime,
+                reasoning: "Last night's sleep was slightly shorter than recommended, so an earlier bedtime may help."
             )
         }
 
@@ -57,7 +60,8 @@ final class AISleepRecommendationService {
             return mockRecommendation(
                 title: "Routine tip",
                 message: "A short, consistent wind-down before bed can help your little one settle.",
-                category: .routine
+                category: .routine,
+                reasoning: "Today's nap duration has been lower than average, so extra rest tonight may be helpful."
             )
         }
 
@@ -66,14 +70,16 @@ final class AISleepRecommendationService {
             return mockRecommendation(
                 title: "Looking good",
                 message: "Last night's sleep was solid. Keeping a similar bedtime can help maintain the pattern.",
-                category: .pattern
+                category: .pattern,
+                reasoning: "Sleep patterns look healthy and consistent with age recommendations."
             )
         }
 
         return mockRecommendation(
             title: "Sleep insight",
             message: "Aim for a calm, dim environment in the hour before bed — it can make a big difference.",
-            category: .routine
+            category: .routine,
+            reasoning: "Sleep patterns look healthy and consistent with age recommendations."
         )
     }
 
@@ -81,13 +87,15 @@ final class AISleepRecommendationService {
         title: String,
         message: String,
         suggestedBedtime: Date? = nil,
-        category: SleepRecommendationCategory
+        category: SleepRecommendationCategory,
+        reasoning: String = ""
     ) -> SleepRecommendation {
         SleepRecommendation(
             title: title,
             message: message,
             suggestedBedtime: suggestedBedtime,
-            category: category
+            category: category,
+            reasoning: reasoning
         )
     }
 }

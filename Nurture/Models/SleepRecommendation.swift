@@ -27,18 +27,22 @@ struct SleepRecommendation: Identifiable {
     var suggestedBedtime: Date?
     /// Category for icon (bedtime, routine, rest, pattern).
     var category: SleepRecommendationCategory
+    /// Human-readable explanation for the recommendation (transparency).
+    var reasoning: String
 
     init(
         id: UUID = UUID(),
         title: String,
         message: String,
         suggestedBedtime: Date? = nil,
-        category: SleepRecommendationCategory
+        category: SleepRecommendationCategory,
+        reasoning: String = ""
     ) {
         self.id = id
         self.title = title
         self.message = message
         self.suggestedBedtime = suggestedBedtime
         self.category = category
+        self.reasoning = reasoning
     }
 }
