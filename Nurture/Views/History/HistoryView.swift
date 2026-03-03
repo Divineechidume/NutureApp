@@ -10,6 +10,7 @@ import SwiftUI
 /// Calendar view of sleep history. Month grid, tap day to see sessions below.
 struct HistoryView: View {
     @ObservedObject var controller: HistoryController
+    @ObservedObject private var manualStore = ManualSleepStore.shared
     @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
 
     private var showEmptyState: Bool {
@@ -93,12 +94,12 @@ struct HistoryView: View {
         }
     }
 
-    /// Day detail: static content for Sun/Mon/Tue; "No Data" when totalSleepSeconds == 0; blank when no selection.
+    /// Day detail when data exists; "No Data" when selected day has no data; blank when no selection.
     @ViewBuilder
     private var dayDetailOrPlaceholder: some View {
         if let selected = controller.selectedDate {
-            if totalSleepSeconds(for: selected) > 0 {
-                hardcodedDayDetail(date: selected)
+            if let day = daySummaryForDisplay(for: selected) {
+                selectedDayDetail(day)
             } else {
                 noDataPlaceholder
             }
@@ -153,63 +154,71 @@ struct HistoryView: View {
         }
     }
 
-    /// Hardcoded totals for exactly three demo days (Sun/Mon/Tue Mar 1–3, 2026). No dynamic computation.
+    /// Single source of truth for History: total sleep (night + naps) for a date in seconds. Used by label and bar; no cached arrays.
     private func totalSleepSeconds(for date: Date) -> TimeInterval {
+        guard let day = daySummaryForDisplay(for: date) else { return 0 }
+        return day.sessions.reduce(0) { $0 + $1.durationSeconds }
+    }
+
+    /// Hardcoded sleep + nap entries for demo week only. Sunday Mar 1, Monday Mar 2, Tuesday Mar 3. Returns nil for all other days.
+    private func hardcodedSessions(for date: Date) -> [SleepSession]? {
+        let childId = UUID(uuidString: "E621E1F8-C36C-495A-93FC-0C247A3E6E5F") ?? UUID()
         let sun = calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
         let mon = calendar.date(from: DateComponents(year: 2026, month: 3, day: 2))!
         let tue = calendar.date(from: DateComponents(year: 2026, month: 3, day: 3))!
-        if calendar.isDate(date, inSameDayAs: sun) { return 13.5 * 3600 }
-        if calendar.isDate(date, inSameDayAs: mon) { return 13.5 * 3600 }
-        if calendar.isDate(date, inSameDayAs: tue) { return 13.5 * 3600 }
-        return 0
+        let feb28 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 28))!
+
+        if calendar.isDate(date, inSameDayAs: sun) {
+            let nightStart = calendar.date(bySettingHour: 20, minute: 15, second: 0, of: feb28)!
+            let nightEnd = calendar.date(bySettingHour: 7, minute: 0, second: 0, of: sun)!
+            let napStart = calendar.date(bySettingHour: 13, minute: 10, second: 0, of: sun)!
+            let napEnd = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: sun)!
+            return [
+                SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+                SleepSession(startDate: napStart, endDate: napEnd, isNighttime: false, childId: childId),
+            ]
+        }
+        if calendar.isDate(date, inSameDayAs: mon) {
+            let nightStart = calendar.date(bySettingHour: 20, minute: 0, second: 0, of: sun)!
+            let nightEnd = calendar.date(bySettingHour: 7, minute: 30, second: 0, of: mon)!
+            let nap1Start = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: mon)!
+            let nap1End = calendar.date(bySettingHour: 13, minute: 15, second: 0, of: mon)!
+            let nap2Start = calendar.date(bySettingHour: 16, minute: 0, second: 0, of: mon)!
+            let nap2End = calendar.date(bySettingHour: 16, minute: 35, second: 0, of: mon)!
+            return [
+                SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+                SleepSession(startDate: nap1Start, endDate: nap1End, isNighttime: false, childId: childId),
+                SleepSession(startDate: nap2Start, endDate: nap2End, isNighttime: false, childId: childId),
+            ]
+        }
+        if calendar.isDate(date, inSameDayAs: tue) {
+            let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: mon)!
+            let nightEnd = calendar.date(bySettingHour: 4, minute: 50, second: 0, of: tue)!
+            let napStart = calendar.date(bySettingHour: 14, minute: 10, second: 0, of: tue)!
+            let napEnd = calendar.date(bySettingHour: 15, minute: 5, second: 0, of: tue)!
+            return [
+                SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+                SleepSession(startDate: napStart, endDate: napEnd, isNighttime: false, childId: childId),
+            ]
+        }
+        return nil
     }
 
-    /// Static day detail for Sun/Mon/Tue: total + two fixed rows (Night Sleep 8h 30m, Nap 5h 0m). No session arrays.
-    private func hardcodedDayDetail(date: Date) -> some View {
-        let totalSeconds = totalSleepSeconds(for: date)
-        return VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(date.formatted(as: .dateLabel))
-                        .font(.headingSmall)
-                        .foregroundColor(.textPrimary)
-                    Text("Total: \(totalSeconds.durationString)")
-                        .font(.bodySmall)
-                        .foregroundColor(.textSecondary)
-                }
-                Spacer()
-            }
-            .padding(Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.medium)
-                    .fill(Color.white)
-                    .cardShadowSecondary()
-            )
-
-            VStack(spacing: 0) {
-                staticSleepRow(icon: "moon.fill", label: "Night Sleep: 8h 30m", color: DesignTokens.darkSage)
-                staticSleepRow(icon: "sun.max.fill", label: "Nap: 5h 0m", color: DesignTokens.peachCoral)
-            }
-            .padding(Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.medium)
-                    .fill(Color.white)
-                    .cardShadowSecondary()
-            )
+    private func daySummaryForDisplay(for date: Date) -> DaySummary? {
+        let dayStart = calendar.startOfDay(for: date)
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? dayStart
+        if !calendar.isDate(weekStart, inSameDayAs: demoWeekStart) {
+            return nil
         }
-    }
-
-    private func staticSleepRow(icon: String, label: String, color: Color) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .frame(width: 24)
-            Text(label)
-                .font(DesignTokens.captionFont())
-                .foregroundColor(DesignTokens.textPrimary)
-            Spacer()
+        var sessions: [SleepSession] = ManualSleepStore.shared.sessions(for: date)
+        if let existing = controller.daySummary(for: date) {
+            sessions.append(contentsOf: existing.sessions)
         }
-        .padding(.vertical, DesignTokens.spacingXS)
+        if sessions.isEmpty, let hardcoded = hardcodedSessions(for: date) {
+            sessions = hardcoded
+        }
+        if sessions.isEmpty { return nil }
+        return DaySummary(id: dayStart, date: dayStart, sessions: sessions)
     }
 
     private var weeklyBarChart: some View {
@@ -220,17 +229,19 @@ struct HistoryView: View {
         struct DayBucket {
             let date: Date
             let label: String
-            let hours: Double
+            let hours: Double?
         }
 
         let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
             let label = weekdays[index]
-            let hours = totalSleepSeconds(for: date) / 3600
+            let totalSeconds = isCurrentWeekDemoWeek ? totalSleepSeconds(for: date) : 0
+            let hours: Double? = totalSeconds > 0 ? totalSeconds / 3600 : nil
             return DayBucket(date: date, label: label, hours: hours)
         }
 
-        let maxHours = max(dayBuckets.map(\.hours).max() ?? 10, 1)
-        let hasDataThisWeek = dayBuckets.contains { $0.hours > 0 }
+        let availableHours = dayBuckets.compactMap { $0.hours }
+        let hasDataThisWeek = isCurrentWeekDemoWeek && !availableHours.isEmpty
+        let maxHours = max(availableHours.max() ?? 10, 1)
 
         return VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
@@ -257,7 +268,7 @@ struct HistoryView: View {
                 HStack(alignment: .bottom, spacing: Spacing.xs) {
                     ForEach(0..<dayBuckets.count, id: \.self) { index in
                         let bucket = dayBuckets[index]
-                        let value = bucket.hours
+                        let value = bucket.hours ?? 0
                         let heightRatio = hasDataThisWeek ? CGFloat(value) / CGFloat(maxHours) : 0
                         let barHeight = max(4, proxy.size.height * heightRatio)
 
@@ -277,7 +288,9 @@ struct HistoryView: View {
                                 .frame(maxWidth: .infinity)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    controller.selectDate(bucket.date)
+                                    if isCurrentWeekDemoWeek || bucket.hours != nil {
+                                        controller.selectDate(bucket.date)
+                                    }
                                 }
 
                             Text(bucket.label)
@@ -296,6 +309,42 @@ struct HistoryView: View {
                 .fill(Color.white)
                 .cardShadowSecondary()
         )
+    }
+
+    private func selectedDayDetail(_ day: DaySummary) -> some View {
+        let deletableIds = ManualSleepStore.shared.entryIds(for: day.date)
+        let totalSeconds = totalSleepSeconds(for: day.date)
+        return VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(day.date.formatted(as: .dateLabel))
+                        .font(.headingSmall)
+                        .foregroundColor(.textPrimary)
+                    Text("Total: \(totalSeconds.durationString)")
+                        .font(.bodySmall)
+                        .foregroundColor(.textSecondary)
+                }
+                Spacer()
+            }
+            .padding(Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .fill(Color.white)
+                    .cardShadowSecondary()
+            )
+
+            ForEach(day.sessions) { session in
+                sessionRow(session, canDelete: deletableIds.contains(session.id)) {
+                    ManualSleepStore.shared.remove(entryId: session.id)
+                }
+            }
+            .padding(Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .fill(Color.white)
+                    .cardShadowSecondary()
+            )
+        }
     }
 
     private func weekTitle(from date: Date) -> String {
@@ -320,6 +369,35 @@ struct HistoryView: View {
         return result
     }
 
+    private func sessionRow(_ session: SleepSession, canDelete: Bool, onDelete: @escaping () -> Void) -> some View {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        let startStr = f.string(from: session.startDate)
+        let endStr = session.endDate.map { f.string(from: $0) } ?? "—"
+        return HStack {
+            Image(systemName: session.isNighttime ? "moon.fill" : "sun.max.fill")
+                .foregroundColor(session.isNighttime ? DesignTokens.darkSage : DesignTokens.peachCoral)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(startStr + " – " + endStr)
+                    .font(DesignTokens.captionFont())
+                    .foregroundColor(DesignTokens.textPrimary)
+                Text(session.durationSeconds.durationString)
+                    .font(DesignTokens.captionFont())
+                    .foregroundColor(DesignTokens.textSecondary)
+            }
+            Spacer()
+            if canDelete {
+                Button(role: .destructive) { onDelete() } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 16))
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, DesignTokens.spacingXS)
+    }
 }
 
 struct EmptyHistoryView: View {
