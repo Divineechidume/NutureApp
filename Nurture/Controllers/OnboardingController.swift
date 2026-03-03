@@ -10,7 +10,7 @@ import Foundation
 import Combine
 
 /// Manages current onboarding step, child profile draft, and pairing state.
-/// Exposes "complete onboarding" and "skip tour". Receives BluetoothService for Pair Device step (TODO).
+/// Exposes "complete onboarding" and "skip tour". Coordinates BluetoothService for Pair Device step.
 final class OnboardingController: ObservableObject {
     // MARK: - Published State
 
@@ -20,6 +20,8 @@ final class OnboardingController: ObservableObject {
     @Published var parentName: String = ""
     @Published var isPairing: Bool = false
     @Published var pairingError: String?
+    /// Discovered BLE devices; kept in sync with BluetoothService for UI binding.
+    @Published var discoveredDevices: [WearableDevice] = []
 
     enum OnboardingStep: Int, CaseIterable {
         case welcome = 0
@@ -30,11 +32,6 @@ final class OnboardingController: ObservableObject {
 
     // MARK: - Dependencies
 
-    // TODO: Inject BluetoothService for Pair Device step
-    // Purpose: Scan and connect to wearable during onboarding
-    // PRD Reference: Section 1 - Device Pairing & Setup
-    // Dependencies: BluetoothService must be implemented
-    // Estimated complexity: Medium
     private let bluetoothService: any BluetoothServiceProtocol
     private var cancellables = Set<AnyCancellable>()
 
@@ -59,8 +56,7 @@ final class OnboardingController: ObservableObject {
         // Analytics: track event "onboarding_tour_skipped"
     }
 
-    /// Starts device pairing. TODO: Call BluetoothService.scanForDevices() and update isPairing/pairingError.
-    /// PRD Reference: Section 1 - Device Pairing & Setup
+    /// Starts BLE scan for Nurture wearables. PRD Section 1 - Device Pairing & Setup.
     func startPairing() {
         pairingError = nil
 
@@ -71,8 +67,6 @@ final class OnboardingController: ObservableObject {
         }
 
         isPairing = true
-        // TODO: Inject BluetoothService and start BLE scan. On devices found: isPairing = false, show list.
-        // On timeout/error: isPairing = false, pairingError = "Could not find device..."
         bluetoothService.scanForDevices()
 
         if useDemoMode {
@@ -82,6 +76,22 @@ final class OnboardingController: ObservableObject {
             }
         }
     }
+
+    /// Connects to the selected wearable. Results arrive via syncPairingStateFromBluetooth (connectedDevice / pairingError).
+    func connect(to device: WearableDevice) {
+        bluetoothService.connectToDevice(device)
+    }
+
+    /// Stops BLE scan so the discovered device list is stable.
+    func stopScanning() {
+        bluetoothService.stopScanning()
+    }
+
+    /// Current connected device, if any. For transitioning to success state in PairDeviceView.
+    var connectedDevice: WearableDevice? { bluetoothService.connectedDevice }
+
+    /// True while connection to a selected device is in progress.
+    var isConnecting: Bool { bluetoothService.isConnecting }
 
     func buildChildProfile() -> Child {
         Child(
@@ -105,6 +115,8 @@ final class OnboardingController: ObservableObject {
     }
 
     private func syncPairingStateFromBluetooth() {
+        discoveredDevices = bluetoothService.discoveredDevices
+
         if useDemoMode { return }
 
         isPairing = bluetoothService.isScanning || bluetoothService.isConnecting

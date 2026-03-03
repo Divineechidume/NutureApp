@@ -19,7 +19,7 @@ void setup() {
   countService.addCharacteristic(countLevelChar);
   BLE.addService(countService);
 
-  BLE.setDeviceName("Nuture");
+  BLE.setDeviceName("Nurture");
 
   BLE.advertise();
   Serial.println("Bluetooth device active, waiting for connections...");
