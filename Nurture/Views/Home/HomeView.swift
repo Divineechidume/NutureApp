@@ -113,8 +113,8 @@ struct HomeView: View {
             LogNapSheet(
                 startTime: $logNapStart,
                 endTime: $logNapEnd,
-                onSave: {
-                    controller.logNap(startDate: logNapStart, durationSeconds: logNapEnd.timeIntervalSince(logNapStart))
+                onSave: { start, end in
+                    controller.logNap(startDate: start, durationSeconds: end.timeIntervalSince(start))
                     showLogNapSheet = false
                 },
                 onCancel: { showLogNapSheet = false }
@@ -543,16 +543,14 @@ struct NoDevicePairedView: View {
 struct LogNapSheet: View {
     @Binding var startTime: Date
     @Binding var endTime: Date
-    var onSave: () -> Void
+    var onSave: (Date, Date) -> Void
     var onCancel: () -> Void
 
     private let calendar = Calendar.current
 
-    /// End > start, end not in future, duration ≥ 1 minute. Dates are constrained to today in onAppear.
+    /// End > start, duration ≥ 1 minute. End in future is allowed; controller clamps to now when saving.
     private var canSave: Bool {
-        let now = Date()
         guard endTime > startTime else { return false }
-        guard endTime <= now else { return false }
         return endTime.timeIntervalSince(startTime) >= 60
     }
 
@@ -573,7 +571,7 @@ struct LogNapSheet: View {
 
                 if !canSave {
                     Section {
-                        Text("End time must be after start time, not in the future, and at least 1 minute long.")
+                        Text("End time must be after start time and at least 1 minute long. End times in the future are clamped to now.")
                             .font(.bodySmall)
                             .foregroundColor(.textSecondary)
                     }
@@ -587,9 +585,11 @@ struct LogNapSheet: View {
                         .foregroundColor(.sageGreen)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { onSave() }
-                        .foregroundColor(canSave ? .sageGreen : .gray)
-                        .disabled(!canSave)
+                    Button("Save") {
+                        onSave(startTime, endTime)
+                    }
+                    .foregroundColor(canSave ? .sageGreen : .gray)
+                    .disabled(!canSave)
                 }
             }
             .background(Color.cream)
