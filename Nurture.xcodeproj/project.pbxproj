@@ -32,6 +32,7 @@
 		A10000000000000000000017 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* NotificationService.swift */; };
 		A10000000000000000000018 /* MLPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* MLPredictionService.swift */; };
 		A1000000000000000000002D /* AISleepRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002D /* AISleepRecommendationService.swift */; };
+		A1000000000000000000002E /* SleepRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002E /* SleepRecommendation.swift */; };
 		A10000000000000000000019 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000019 /* Constants.swift */; };
 		A1000000000000000000001A /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001A /* DesignTokens.swift */; };
 		A1000000000000000000001B /* Date+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* Date+Formatting.swift */; };
@@ -62,6 +63,7 @@
 		A20000000000000000000004 /* SleepSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepSession.swift; sourceTree = "<group>"; };
 		A20000000000000000000005 /* NurtureBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NurtureBand.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* NapPrediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NapPrediction.swift; sourceTree = "<group>"; };
+		A2000000000000000000002E /* SleepRecommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepRecommendation.swift; sourceTree = "<group>"; };
 		A20000000000000000000007 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A20000000000000000000008 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		A20000000000000000000009 /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
@@ -157,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000003 /* Child.swift */,
+				A2000000000000000000002E /* SleepRecommendation.swift */,
 				A2000000000000000000001F /* Household.swift */,
 				A20000000000000000000020 /* Member.swift */,
 				A20000000000000000000021 /* NotificationPreferences.swift */,
@@ -351,6 +354,7 @@
 				A10000000000000000000020 /* Member.swift in Sources */,
 				A10000000000000000000021 /* NotificationPreferences.swift in Sources */,
 				A10000000000000000000006 /* NapPrediction.swift in Sources */,
+				A1000000000000000000002E /* SleepRecommendation.swift in Sources */,
 				A10000000000000000000007 /* RootView.swift in Sources */,
 				A10000000000000000000008 /* MainTabView.swift in Sources */,
 				A10000000000000000000009 /* OnboardingContainerView.swift in Sources */,
