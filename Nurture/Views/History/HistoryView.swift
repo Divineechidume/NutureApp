@@ -46,10 +46,7 @@ struct HistoryView: View {
                         VStack(spacing: Spacing.lg) {
                             weekHeader
                             weeklyBarChart
-                            if let selected = controller.selectedDate,
-                               let day = daySummaryForDisplay(for: selected) {
-                                selectedDayDetail(day)
-                            }
+                            dayDetailOrPlaceholder
                         }
                         .padding(Spacing.lg)
                     }
@@ -89,6 +86,40 @@ struct HistoryView: View {
             }
             .disabled(weekOffset >= maxWeekOffset)
             .opacity(weekOffset >= maxWeekOffset ? 0.35 : 1.0)
+        }
+    }
+
+    /// Day detail when data exists; blank metrics placeholder when no selection or no data.
+    @ViewBuilder
+    private var dayDetailOrPlaceholder: some View {
+        if let selected = controller.selectedDate,
+           let day = daySummaryForDisplay(for: selected) {
+            selectedDayDetail(day)
+        } else {
+            emptyDayDetailPlaceholder
+        }
+    }
+
+    /// Blank metrics section so layout stays intact when no history or no day selected.
+    private var emptyDayDetailPlaceholder: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Day details")
+                        .font(.headingSmall)
+                        .foregroundColor(.textPrimary)
+                    Text("Total: —")
+                        .font(.bodySmall)
+                        .foregroundColor(.textSecondary)
+                }
+                Spacer()
+            }
+            .padding(Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .fill(Color.white)
+                    .cardShadowSecondary()
+            )
         }
     }
 
@@ -182,50 +213,51 @@ struct HistoryView: View {
             }
 
             if !hasDataThisWeek {
-                let emptyWeek = calendar.isDate(currentWeekStart, inSameDayAs: calendar.date(from: DateComponents(year: 2026, month: 2, day: 15))!)
-                Text(emptyWeek ? "No history available" : "No history collected for this week")
+                Text("No history available for this week")
                     .font(.bodySmall)
                     .foregroundColor(.textSecondary)
                     .padding(.top, Spacing.xs)
-            } else {
-                GeometryReader { proxy in
-                    HStack(alignment: .bottom, spacing: Spacing.xs) {
-                        ForEach(0..<dayBuckets.count, id: \.self) { index in
-                            let bucket = dayBuckets[index]
-                            let value = bucket.hours ?? 0
-                            let heightRatio = CGFloat(value) / CGFloat(maxHours)
-                            let barHeight = max(4, proxy.size.height * heightRatio)
+            }
 
-                            VStack(spacing: 4) {
-                                if value > 0 {
-                                    Text(String(format: "%.1fh", value))
-                                        .font(.labelSmall)
-                                        .foregroundColor(.textSecondary)
-                                } else {
-                                    Text(" ")
-                                        .font(.labelSmall)
-                                }
+            // Always show bar area (empty bars when no data)
+            GeometryReader { proxy in
+                HStack(alignment: .bottom, spacing: Spacing.xs) {
+                    ForEach(0..<dayBuckets.count, id: \.self) { index in
+                        let bucket = dayBuckets[index]
+                        let value = bucket.hours ?? 0
+                        let heightRatio = hasDataThisWeek ? CGFloat(value) / CGFloat(maxHours) : 0
+                        let barHeight = max(4, proxy.size.height * heightRatio)
 
-                                RoundedRectangle(cornerRadius: CornerRadius.small)
-                                    .fill(Color.sageGreen.opacity(value > 0 ? 0.9 : 0.2))
-                                    .frame(height: barHeight)
-                                    .frame(maxWidth: .infinity)
-                                    .onTapGesture {
-                                        if bucket.hours != nil {
-                                            controller.selectDate(bucket.date)
-                                        }
-                                    }
-
-                                Text(bucket.label)
+                        VStack(spacing: 4) {
+                            if value > 0 {
+                                Text(String(format: "%.1fh", value))
                                     .font(.labelSmall)
                                     .foregroundColor(.textSecondary)
+                            } else {
+                                Text(" ")
+                                    .font(.labelSmall)
                             }
-                            .frame(maxWidth: .infinity)
+
+                            RoundedRectangle(cornerRadius: CornerRadius.small)
+                                .fill(Color.sageGreen.opacity(value > 0 ? 0.9 : 0.2))
+                                .frame(height: barHeight)
+                                .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    if bucket.hours != nil {
+                                        controller.selectDate(bucket.date)
+                                    }
+                                }
+
+                            Text(bucket.label)
+                                .font(.labelSmall)
+                                .foregroundColor(.textSecondary)
                         }
+                        .frame(maxWidth: .infinity)
                     }
                 }
-                .frame(height: 140)
             }
+            .frame(height: 140)
         }
         .padding(Spacing.md)
         .background(
