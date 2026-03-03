@@ -36,7 +36,6 @@
 		A1000000000000000000001B /* Date+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* Date+Formatting.swift */; };
 		A1000000000000000000001C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* Assets.xcassets */; };
 		A1000000000000000000001D /* RolloverAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* RolloverAlertView.swift */; };
-		A1000000000000000000002C /* NotificationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* NotificationDetailView.swift */; };
 		A1000000000000000000001E /* ChildProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* ChildProfileStore.swift */; };
 		A1000000000000000000001F /* Household.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* Household.swift */; };
 		A10000000000000000000020 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* Member.swift */; };
@@ -51,8 +50,11 @@
 		A10000000000000000000029 /* ChildrenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* ChildrenStore.swift */; };
 		A1000000000000000000002A /* AddChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* AddChildView.swift */; };
 		A1000000000000000000002B /* EditFamilyNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* EditFamilyNameView.swift */; };
-		A1000000000000000000002D /* SleepRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002D /* SleepRecommendation.swift */; };
-		A1000000000000000000002E /* AISleepRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002E /* AISleepRecommendationService.swift */; };
+		A1000000000000000000002C /* NotificationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* NotificationDetailView.swift */; };
+		A1000000000000000000002F /* ManualSleepStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002F /* ManualSleepStore.swift */; };
+		A10000000000000000000030 /* NapRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000030 /* NapRecommendationEngine.swift */; };
+		A10000000000000000000031 /* SleepRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000031 /* SleepRecommendation.swift */; };
+		A10000000000000000000032 /* AISleepRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000032 /* AISleepRecommendationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -101,8 +103,10 @@
 		A2000000000000000000002A /* AddChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChildView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002B /* EditFamilyNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditFamilyNameView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002C /* NotificationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDetailView.swift; sourceTree = "<group>"; };
-		A2000000000000000000002D /* SleepRecommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepRecommendation.swift; sourceTree = "<group>"; };
-		A2000000000000000000002E /* AISleepRecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISleepRecommendationService.swift; sourceTree = "<group>"; };
+		A2000000000000000000002F /* ManualSleepStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualSleepStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000030 /* NapRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NapRecommendationEngine.swift; sourceTree = "<group>"; };
+		A20000000000000000000031 /* SleepRecommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepRecommendation.swift; sourceTree = "<group>"; };
+		A20000000000000000000032 /* AISleepRecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISleepRecommendationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,7 +169,7 @@
 				A20000000000000000000005 /* NurtureBand.swift */,
 				A20000000000000000000004 /* SleepSession.swift */,
 				A20000000000000000000006 /* NapPrediction.swift */,
-				A2000000000000000000002D /* SleepRecommendation.swift */,
+				A20000000000000000000031 /* SleepRecommendation.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -203,12 +207,13 @@
 				A20000000000000000000016 /* SleepDetectionService.swift */,
 				A20000000000000000000017 /* NotificationService.swift */,
 				A20000000000000000000018 /* MLPredictionService.swift */,
+				A20000000000000000000030 /* NapRecommendationEngine.swift */,
+				A20000000000000000000032 /* AISleepRecommendationService.swift */,
 				A20000000000000000000022 /* SecureStorage.swift */,
 				A20000000000000000000023 /* HouseholdService.swift */,
 				A20000000000000000000024 /* SyncCoordinator.swift */,
 				A20000000000000000000025 /* ServiceProtocols.swift */,
 				A20000000000000000000029 /* ChildrenStore.swift */,
-				A2000000000000000000002E /* AISleepRecommendationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -220,6 +225,7 @@
 				A2000000000000000000001A /* DesignTokens.swift */,
 				A2000000000000000000001E /* ChildProfileStore.swift */,
 				A20000000000000000000026 /* HouseholdStore.swift */,
+				A2000000000000000000002F /* ManualSleepStore.swift */,
 				A4000000000000000000000E /* Extensions */,
 			);
 			path = Utilities;
@@ -309,7 +315,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 2620;
 			};
 			buildConfigurationList = A60000000000000000000001 /* Build configuration list for PBXProject "Nurture" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -374,6 +380,7 @@
 				A10000000000000000000016 /* SleepDetectionService.swift in Sources */,
 				A10000000000000000000017 /* NotificationService.swift in Sources */,
 				A10000000000000000000018 /* MLPredictionService.swift in Sources */,
+				A10000000000000000000030 /* NapRecommendationEngine.swift in Sources */,
 				A10000000000000000000022 /* SecureStorage.swift in Sources */,
 				A10000000000000000000023 /* HouseholdService.swift in Sources */,
 				A10000000000000000000024 /* SyncCoordinator.swift in Sources */,
@@ -388,8 +395,9 @@
 				A10000000000000000000029 /* ChildrenStore.swift in Sources */,
 				A1000000000000000000002A /* AddChildView.swift in Sources */,
 				A1000000000000000000002B /* EditFamilyNameView.swift in Sources */,
-				A1000000000000000000002D /* SleepRecommendation.swift in Sources */,
-				A1000000000000000000002E /* AISleepRecommendationService.swift in Sources */,
+				A1000000000000000000002F /* ManualSleepStore.swift in Sources */,
+				A10000000000000000000031 /* SleepRecommendation.swift in Sources */,
+				A10000000000000000000032 /* AISleepRecommendationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -427,6 +435,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = ADG742R63A;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -449,6 +458,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG USE_DEMO_MODE $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -485,6 +495,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = ADG742R63A;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -500,6 +511,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -512,7 +524,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = ADG742R63A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Nurture uses Bluetooth to connect to your wearable and track sleep.";
@@ -541,7 +552,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = ADG742R63A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Nurture uses Bluetooth to connect to your wearable and track sleep.";

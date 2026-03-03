@@ -15,17 +15,23 @@ final class HomeController: ObservableObject {
 
     @Published var isAsleep: Bool = false
     @Published var sleepStartDate: Date?
+    /// When non-nil, a nap is in progress (monitor-based or started via Start Nap).
+    @Published var napStartDate: Date?
     @Published var lastNightTotalDuration: TimeInterval = 0
     @Published var todaysNapsDuration: TimeInterval = 0
     @Published var todaysNapCount: Int = 0
-    @Published var napPrediction: NapPrediction?
     @Published var sleepRecommendation: SleepRecommendation?
     @Published var child: Child?
 
     private let childrenStore: ChildrenStore?
     private let aiSleepRecService = AISleepRecommendationService()
-    private let mlPredictionService = MLPredictionService()
+    private let napRecommendationEngine = NapRecommendationEngine()
     private var cancellable: AnyCancellable?
+    private var manualStoreCancellable: AnyCancellable?
+    /// Fires every minute while a nap is in progress to refresh live duration.
+    private var napLiveTimer: Timer?
+    /// Fires every minute when awake so "Awake for Xh Ym" updates from history.
+    private var awakeLiveTimer: Timer?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
 
@@ -54,6 +60,12 @@ final class HomeController: ObservableObject {
                 self?.objectWillChange.send()
             }
         }
+        manualStoreCancellable = ManualSleepStore.shared.objectWillChange.sink { [weak self] _ in
+            self?.syncTodaysNapsFromStore()
+            self?.objectWillChange.send()
+        }
+        syncTodaysNapsFromStore()
+        startAwakeLiveTimerIfNeeded()
 
         if useDemoMode {
             // Demo: fully mocked data for UI previews and simulator
@@ -70,15 +82,51 @@ final class HomeController: ObservableObject {
 
     // MARK: - Computed (for View)
 
+    /// Duration for status: night sleep elapsed, or when awake = time since last sleep/nap end (from history).
     var durationString: String {
         if isAsleep, let start = sleepStartDate {
             return Date().timeIntervalSince(start).durationString
         }
-        return "2h 15m" // Mock when awake
+        if napStartDate != nil { return "" } // Napping uses napDurationString
+        if let end = lastSleepEndTime, end <= Date() {
+            return Date().timeIntervalSince(end).durationString
+        }
+        return "2h 15m" // Fallback when no history or lastSleepEndTime in future
+    }
+
+    /// Most recent completed sleep or nap end time (source of truth: ManualSleepStore).
+    var lastSleepEndTime: Date? {
+        ManualSleepStore.shared.lastSleepEndDate(childId: currentChildId)
+    }
+
+    /// Awake duration in seconds. Derived only (no stored state). 0 when napping; otherwise max(0, currentTime - lastSleepEndTime). Recalculates when nap added/deleted/edited via lastSleepEndTime from store.
+    var awakeDuration: TimeInterval {
+        if napStartDate != nil { return 0 }
+        guard let end = lastSleepEndTime else { return 0 }
+        return max(0, Date().timeIntervalSince(end))
+    }
+
+    /// State-based nap recommendation (no fixed nextNapTime). Recomputed when sleep history changes or timer fires.
+    var napRecommendation: NapRecommendation {
+        napRecommendationEngine.recommend(lastSleepEndTime: lastSleepEndTime, currentTime: Date())
+    }
+
+    /// Live nap duration (updates every minute via napLiveTimer). Use when napStartDate != nil.
+    var napDurationString: String {
+        guard let start = napStartDate else { return "" }
+        return Date().timeIntervalSince(start).durationString
     }
 
     var sleepStartTimeString: String? {
         guard isAsleep, let start = sleepStartDate else { return nil }
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f.string(from: start)
+    }
+
+    /// Start time of current nap (for status card when napping).
+    var napStartTimeString: String? {
+        guard let start = napStartDate else { return nil }
         let f = DateFormatter()
         f.timeStyle = .short
         return f.string(from: start)
@@ -116,6 +164,75 @@ final class HomeController: ObservableObject {
         isAsleep = !awake
     }
 
+    // MARK: - Manual / monitor-based sleep tracking (mock)
+
+    private var currentChildId: UUID { childrenStore?.selectedChild?.id ?? UUID() }
+
+    /// Start Sleep: record start timestamp (mock), update status to sleeping.
+    func startSleep() {
+        isAsleep = true
+        sleepStartDate = Date()
+    }
+
+    /// End Sleep: compute duration, add to manual history (mock), update status.
+    func endSleep() {
+        guard let start = sleepStartDate else { return }
+        let end = Date()
+        ManualSleepStore.shared.add(startDate: start, endDate: end, isNighttime: true, childId: currentChildId)
+        isAsleep = false
+        sleepStartDate = nil
+        lastNightTotalDuration = end.timeIntervalSince(start)
+        refresh()
+    }
+
+    /// Start Nap: record nap start (mock), show status as sleeping, begin live duration timer.
+    func startNap() {
+        napLiveTimer?.invalidate()
+        napLiveTimer = nil
+        napStartDate = Date()
+        napLiveTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+        RunLoop.main.add(napLiveTimer!, forMode: .common)
+    }
+
+    /// End Nap: compute duration, add to today's nap history, update card, clear status.
+    func endNap() {
+        napLiveTimer?.invalidate()
+        napLiveTimer = nil
+        guard let start = napStartDate else { return }
+        let end = Date()
+        ManualSleepStore.shared.add(startDate: start, endDate: end, isNighttime: false, childId: currentChildId)
+        napStartDate = nil
+        syncTodaysNapsFromStore()
+        refresh()
+    }
+
+    /// Log Nap (manual): save nap with given start and duration to history. End time is clamped to now if in the future.
+    func logNap(startDate: Date, durationSeconds: TimeInterval) {
+        let endDate = startDate.addingTimeInterval(durationSeconds)
+        let clampedEnd = endDate > Date() ? Date() : endDate
+        ManualSleepStore.shared.add(startDate: startDate, endDate: clampedEnd, isNighttime: false, childId: currentChildId)
+        syncTodaysNapsFromStore()
+        refresh()
+    }
+
+    /// Sync Today's Naps from ManualSleepStore (called when store changes, e.g. add/delete).
+    private func syncTodaysNapsFromStore() {
+        let today = Calendar.current.startOfDay(for: Date())
+        todaysNapsDuration = ManualSleepStore.shared.napDuration(for: today)
+        todaysNapCount = ManualSleepStore.shared.napEntries(for: today).count
+    }
+
+    /// Start a 60s timer when awake so "Awake for Xh Ym" updates every minute from lastSleepEndTime.
+    private func startAwakeLiveTimerIfNeeded() {
+        awakeLiveTimer?.invalidate()
+        awakeLiveTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+        RunLoop.main.add(awakeLiveTimer!, forMode: .common)
+    }
+
     private func loadMockData() {
         if let store = childrenStore {
             child = store.selectedChild
@@ -132,12 +249,6 @@ final class HomeController: ObservableObject {
         lastNightTotalDuration = 9 * 3600 + 15 * 60 // 9h 15m
         todaysNapsDuration = 1 * 3600 + 30 * 60
         todaysNapCount = 1
-        if let wakeTime = sleepStartDate {
-            napPrediction = mlPredictionService.predictNextNap(
-                wakeTime: wakeTime,
-                ageRange: child?.ageRange ?? .sixToTwelveMonths
-            )
-        }
         sleepRecommendation = aiSleepRecService.recommendation(
             for: child,
             lastNightTotalSeconds: lastNightTotalDuration,
@@ -151,8 +262,10 @@ final class HomeController: ObservableObject {
     /// Uses only simple duration-style inputs so the Home screen always shows
     /// a useful "next nap" and "tonight's suggestion" card.
     private func seedMockPredictionIfNeeded() {
-        // TEST MODE: Keep child awake for nap prediction visibility
-        isAsleep = false
+        // TEST MODE: Keep child awake for nap prediction visibility (don’t override in-progress sleep/nap)
+        if sleepStartDate == nil {
+            isAsleep = false
+        }
 
         // Ensure we have a child profile to derive age range from.
         if child == nil {
@@ -174,13 +287,6 @@ final class HomeController: ObservableObject {
             todaysNapsDuration = 1 * 3600                // 1h across naps
             todaysNapCount = 2
         }
-
-        // Use a simple "awake for about 2 hours" assumption for next‑nap timing.
-        let assumedLastWakeTime = Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()
-        napPrediction = mlPredictionService.predictNextNap(
-            wakeTime: assumedLastWakeTime,
-            ageRange: child?.ageRange ?? .sixToTwelveMonths
-        )
 
         sleepRecommendation = aiSleepRecService.recommendation(
             for: child,
