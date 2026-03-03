@@ -548,10 +548,15 @@ struct LogNapSheet: View {
 
     private let calendar = Calendar.current
 
-    /// End > start, duration ≥ 1 minute. End in future is allowed; controller clamps to now when saving.
+    /// End time must never exceed current device time. Use for all calculations and when saving.
+    private var cappedEndTime: Date {
+        min(endTime, Date())
+    }
+
+    /// End > start, duration ≥ 1 minute. Uses cappedEndTime so future selection is auto-capped.
     private var canSave: Bool {
-        guard endTime > startTime else { return false }
-        return endTime.timeIntervalSince(startTime) >= 60
+        guard cappedEndTime > startTime else { return false }
+        return cappedEndTime.timeIntervalSince(startTime) >= 60
     }
 
     var body: some View {
@@ -571,7 +576,7 @@ struct LogNapSheet: View {
 
                 if !canSave {
                     Section {
-                        Text("End time must be after start time and at least 1 minute long. End times in the future are clamped to now.")
+                        Text("End time must be after start time and at least 1 minute long. End time cannot exceed current time.")
                             .font(.bodySmall)
                             .foregroundColor(.textSecondary)
                     }
@@ -586,7 +591,7 @@ struct LogNapSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        onSave(startTime, endTime)
+                        onSave(startTime, cappedEndTime)
                     }
                     .foregroundColor(canSave ? .sageGreen : .gray)
                     .disabled(!canSave)

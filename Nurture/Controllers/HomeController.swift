@@ -20,6 +20,7 @@ final class HomeController: ObservableObject {
     @Published var lastNightTotalDuration: TimeInterval = 0
     @Published var todaysNapsDuration: TimeInterval = 0
     @Published var todaysNapCount: Int = 0
+    /// Derived from history only (nextNapTime = lastSleepEndTime + wakeWindow). Recomputed when sleep history changes; not stored as static state.
     @Published var napPrediction: NapPrediction?
     @Published var sleepRecommendation: SleepRecommendation?
     @Published var child: Child?
@@ -101,12 +102,11 @@ final class HomeController: ObservableObject {
         ManualSleepStore.shared.lastSleepEndDate(childId: currentChildId)
     }
 
-    /// Awake duration in seconds. 0 when napping or when lastSleepEndTime is in the future; otherwise now - lastSleepEndTime.
+    /// Awake duration in seconds. Derived only (no stored state). 0 when napping; otherwise max(0, currentTime - lastSleepEndTime). Recalculates when nap added/deleted/edited via lastSleepEndTime from store.
     var awakeDuration: TimeInterval {
         if napStartDate != nil { return 0 }
         guard let end = lastSleepEndTime else { return 0 }
-        if end > Date() { return 0 }
-        return Date().timeIntervalSince(end)
+        return max(0, Date().timeIntervalSince(end))
     }
 
     /// Live nap duration (updates every minute via napLiveTimer). Use when napStartDate != nil.
@@ -222,8 +222,8 @@ final class HomeController: ObservableObject {
         todaysNapCount = ManualSleepStore.shared.napEntries(for: today).count
     }
 
-    /// Recompute nap prediction from history: lastSleepEndTime + configurable wake window (ML age-based).
-    /// Call when: nap logged, nap ends, nap deleted, or every minute when awake.
+    /// Recompute nap prediction from history: nextNapTime = lastSleepEndTime + wakeWindow (ML age-based). No static nextNapTime storage.
+    /// Called automatically when: nap logged, nap ends, nap deleted (store change); also from refresh/seed.
     private func updateNapPredictionFromHistory() {
         let wakeTime = lastSleepEndTime ?? Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()
         napPrediction = mlPredictionService.predictNextNap(
