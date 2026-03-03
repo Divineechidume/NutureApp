@@ -130,22 +130,46 @@ struct HistoryView: View {
         return day.sessions.reduce(0) { $0 + $1.durationSeconds }
     }
 
-    /// Mock sessions for Tuesday Mar 3, 2026: night 9h 15m + nap 1h 30m + nap 1h = 11h 45m total.
-    private func mockSessionsForTuesdayMar3() -> [SleepSession] {
+    /// Week of Mar 1, 2026 — mock week. Other weeks use fallback or empty.
+    private var mockWeekStart: Date {
+        calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
+    }
+
+    /// Deterministic pseudo-random in [0, 1) from seed.
+    private func unitRandom(seed: Int) -> Double {
+        var x = UInt64(bitPattern: Int64(seed))
+        x = x &* 6364136223846793005 &+ 1442695040888963407
+        return Double(x % 10_000) / 10_000.0
+    }
+
+    /// Generate mock sessions for a date: random night (8–10.5h) + 1–3 naps (30–90 min each), no overlapping. Total is always computed by summing these.
+    private func mockSessionsForDate(_ date: Date) -> [SleepSession] {
+        let dayStart = calendar.startOfDay(for: date)
+        let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart)!
         let childId = UUID()
-        let tue = calendar.date(from: DateComponents(year: 2026, month: 3, day: 3))!
-        let prevDay = calendar.date(byAdding: .day, value: -1, to: tue)!
+        let baseSeed = Int(dayStart.timeIntervalSince1970)
+
+        let nightDurationHours = 8.0 + unitRandom(seed: baseSeed) * (10.5 - 8.0)
+        let nightDurationSeconds = (nightDurationHours * 3600).rounded()
         let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay)!
-        let nightEnd = nightStart.addingTimeInterval(9 * 3600 + 15 * 60)
-        let nap1Start = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tue)!
-        let nap1End = nap1Start.addingTimeInterval(1 * 3600 + 30 * 60)
-        let nap2Start = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tue)!
-        let nap2End = nap2Start.addingTimeInterval(3600)
-        return [
+        let nightEnd = nightStart.addingTimeInterval(nightDurationSeconds)
+        var sessions: [SleepSession] = [
             SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
-            SleepSession(startDate: nap1Start, endDate: nap1End, isNighttime: false, childId: childId),
-            SleepSession(startDate: nap2Start, endDate: nap2End, isNighttime: false, childId: childId),
         ]
+
+        let numNaps = 1 + (Int(unitRandom(seed: baseSeed + 1) * 3) % 3)
+        var nextNapStart = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart)!
+        if nextNapStart < nightEnd { nextNapStart = nightEnd.addingTimeInterval(30 * 60) }
+
+        for i in 0..<numNaps {
+            let napDurationMinutes = 30 + Int(unitRandom(seed: baseSeed + 2 + i * 2) * 61) % 61
+            let napDurationSeconds = TimeInterval(napDurationMinutes * 60)
+            let napEnd = nextNapStart.addingTimeInterval(napDurationSeconds)
+            sessions.append(SleepSession(startDate: nextNapStart, endDate: napEnd, isNighttime: false, childId: childId))
+            nextNapStart = napEnd.addingTimeInterval(45 * 60)
+        }
+
+        return sessions
     }
 
     private func daySummaryForDisplay(for date: Date) -> DaySummary? {
@@ -155,8 +179,9 @@ struct HistoryView: View {
         if let existing = controller.daySummary(for: date) {
             sessions.append(contentsOf: existing.sessions)
         }
-        if sessions.isEmpty, calendar.isDate(date, inSameDayAs: mockAnchorDate) {
-            sessions = mockSessionsForTuesdayMar3()
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? dayStart
+        if sessions.isEmpty, calendar.isDate(weekStart, inSameDayAs: mockWeekStart) {
+            sessions = mockSessionsForDate(date)
         }
         if sessions.isEmpty, let mockH = mockHoursForFallback(for: date), mockH > 0 {
             let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart
@@ -169,26 +194,17 @@ struct HistoryView: View {
         return DaySummary(id: dayStart, date: dayStart, sessions: sessions)
     }
 
-    /// Fallback mock hours only for weeks that are not the primary mock week (Mar 1 2026).
+    /// Fallback mock (single night) for other weeks when no data.
     private func mockHoursForFallback(for date: Date) -> Double? {
-        let weekMar1 = calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
         let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
-        if calendar.isDate(weekStart, inSameDayAs: weekMar1) { return nil }
+        if calendar.isDate(weekStart, inSameDayAs: mockWeekStart) { return nil }
         let weekFeb22 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 22))!
         if calendar.isDate(weekStart, inSameDayAs: weekFeb22) {
             let weekdayIndex = calendar.component(.weekday, from: date) - 1
             let seed = Int(weekStart.timeIntervalSince1970) ^ (weekdayIndex * 1_109_519_737)
-            return deterministicHours(min: 7.0, max: 11.0, seed: seed)
+            return 8.0 + unitRandom(seed: seed) * 2.5
         }
         return nil
-    }
-
-    private func deterministicHours(min: Double, max: Double, seed: Int) -> Double {
-        var x = UInt64(bitPattern: Int64(seed))
-        x = x &* 6364136223846793005 &+ 1442695040888963407
-        let unit = Double(x % 10_000) / 10_000.0
-        let value = min + (max - min) * unit
-        return (value * 10).rounded() / 10
     }
 
     private var weeklyBarChart: some View {
