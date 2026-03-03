@@ -34,6 +34,11 @@ struct HomeView: View {
         controller.isAsleep || controller.napStartDate != nil
     }
 
+    /// AI sleep recommendation for the card (avoids ObservedObject wrapper in ViewBuilder).
+    private var sleepRecommendation: SleepRecommendation? {
+        controller.sleepRecommendation
+    }
+
     /// Status card duration: "Napping for: Xh Ym" (live) when nap in progress, else Sleeping/Awake.
     private var sleepStatusDurationText: String {
         if controller.napStartDate != nil {
@@ -207,7 +212,7 @@ struct HomeView: View {
             if !sleepStatusIsSleeping {
                 NapRecommendationCard(recommendation: controller.napRecommendation)
             }
-            if let rec = controller.sleepRecommendation {
+            if let rec = sleepRecommendation {
                 SleepRecommendationCard(recommendation: rec)
             }
         }
