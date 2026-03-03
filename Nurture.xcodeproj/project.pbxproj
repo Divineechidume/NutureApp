@@ -51,6 +51,8 @@
 		A10000000000000000000029 /* ChildrenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* ChildrenStore.swift */; };
 		A1000000000000000000002A /* AddChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* AddChildView.swift */; };
 		A1000000000000000000002B /* EditFamilyNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* EditFamilyNameView.swift */; };
+		A1000000000000000000002D /* SleepRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002D /* SleepRecommendation.swift */; };
+		A1000000000000000000002E /* AISleepRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002E /* AISleepRecommendationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -99,6 +101,8 @@
 		A2000000000000000000002A /* AddChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChildView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002B /* EditFamilyNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditFamilyNameView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002C /* NotificationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDetailView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002D /* SleepRecommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepRecommendation.swift; sourceTree = "<group>"; };
+		A2000000000000000000002E /* AISleepRecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISleepRecommendationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +165,7 @@
 				A20000000000000000000005 /* NurtureBand.swift */,
 				A20000000000000000000004 /* SleepSession.swift */,
 				A20000000000000000000006 /* NapPrediction.swift */,
+				A2000000000000000000002D /* SleepRecommendation.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -203,6 +208,7 @@
 				A20000000000000000000024 /* SyncCoordinator.swift */,
 				A20000000000000000000025 /* ServiceProtocols.swift */,
 				A20000000000000000000029 /* ChildrenStore.swift */,
+				A2000000000000000000002E /* AISleepRecommendationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -382,6 +388,8 @@
 				A10000000000000000000029 /* ChildrenStore.swift in Sources */,
 				A1000000000000000000002A /* AddChildView.swift in Sources */,
 				A1000000000000000000002B /* EditFamilyNameView.swift in Sources */,
+				A1000000000000000000002D /* SleepRecommendation.swift in Sources */,
+				A1000000000000000000002E /* AISleepRecommendationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
