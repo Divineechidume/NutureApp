@@ -204,8 +204,8 @@ struct HomeView: View {
                 )
             }
             .buttonStyle(.plain)
-            if !isAsleep, let nap = controller.napPrediction {
-                NapPredictionCard(prediction: nap)
+            if !sleepStatusIsSleeping {
+                NapRecommendationCard(recommendation: controller.napRecommendation)
             }
             if let rec = controller.sleepRecommendation {
                 SleepRecommendationCard(recommendation: rec)
