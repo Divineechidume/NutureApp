@@ -708,18 +708,7 @@ struct TodayNapsDetailView: View {
                 } else {
                     List {
                         ForEach(todayNaps) { entry in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(formatTime(entry.startDate))
-                                        .font(.bodyMedium)
-                                        .foregroundColor(.textPrimary)
-                                    Text(entry.durationSeconds.durationString)
-                                        .font(.bodySmall)
-                                        .foregroundColor(.textSecondary)
-                                }
-                                Spacer()
-                            }
-                            .padding(.vertical, Spacing.xs)
+                            napRow(entry: entry)
                         }
                     }
                     .listStyle(.insetGrouped)
@@ -743,6 +732,18 @@ struct TodayNapsDetailView: View {
         let f = DateFormatter()
         f.timeStyle = .short
         return f.string(from: date)
+    }
+
+    /// One nap row: "StartTime – EndTime (Duration)" with short time style for start/end.
+    private func napRow(entry: ManualSleepEntry) -> some View {
+        let endTime = entry.startDate.addingTimeInterval(entry.durationSeconds)
+        return HStack {
+            Text("\(formatTime(entry.startDate)) – \(formatTime(endTime)) (\(entry.durationSeconds.durationString))")
+                .font(.bodyMedium)
+                .foregroundColor(.textPrimary)
+            Spacer()
+        }
+        .padding(.vertical, Spacing.xs)
     }
 }
 
