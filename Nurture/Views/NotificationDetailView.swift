@@ -32,14 +32,21 @@ struct NotificationDetailView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Spacing.md)
 
-                Spacer()
-
                 Button(action: onDismiss) {
-                    Text("Done")
+                    Text("I've Checked")
                         .font(.labelLarge)
+                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.small)
+                                .fill(Color.sageGreen)
+                        )
                 }
-                .buttonStyle(.borderedProminent)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.top, Spacing.sm)
+
+                Spacer()
             }
             .padding()
             .navigationTitle("Notification")

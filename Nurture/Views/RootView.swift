@@ -59,7 +59,20 @@ struct RootView: View {
             }
         }
         .onAppear { presentedNotification = notificationService.incomingNotification }
-        .onReceive(notificationService.$incomingNotification) { new in presentedNotification = new }
+        .onReceive(notificationService.$incomingNotification) { new in
+            guard let new else { presentedNotification = nil; return }
+            let info = new.userInfo
+            let isRollover = (info["notificationType"] as? String) == "rollover"
+            if isRollover {
+                // Route rollover notification taps through the full-screen overlay instead of a sheet.
+                let childName = (info["childName"] as? String) ?? "Baby"
+                let rolloverTime = (info["rolloverTime"] as? TimeInterval).flatMap { Date(timeIntervalSince1970: $0) } ?? Date()
+                notificationService.incomingNotification = nil
+                rolloverAlertState.presentRollover(childName: childName, time: rolloverTime)
+            } else {
+                presentedNotification = new
+            }
+        }
         .sheet(item: $presentedNotification) { payload in
             let presentation = notificationService.presentation(from: payload)
             NotificationDetailView(
