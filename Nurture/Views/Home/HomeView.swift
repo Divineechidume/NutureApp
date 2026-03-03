@@ -13,6 +13,7 @@ struct HomeView: View {
     @ObservedObject var controller: HomeController
     @ObservedObject var childrenStore: ChildrenStore
     @ObservedObject var householdService: HouseholdService
+    @ObservedObject private var manualStore = ManualSleepStore.shared
 
     @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
     @State private var showNapOptions = false
@@ -28,6 +29,36 @@ struct HomeView: View {
         return useDemoMode ? true : true
     }
 
+    /// True when showing "Sleeping" (night sleep or nap in progress).
+    private var sleepStatusIsSleeping: Bool {
+        controller.isAsleep || controller.napStartDate != nil
+    }
+
+    /// Status card duration: "Napping for: Xh Ym" (live) when nap in progress, else Sleeping/Awake.
+    private var sleepStatusDurationText: String {
+        if controller.napStartDate != nil {
+            return "Napping for: \(controller.napDurationString)"
+        }
+        if controller.isAsleep {
+            return "Sleeping for \(controller.durationString)"
+        }
+        return "Awake for \(controller.durationString)"
+    }
+
+    /// Start time for status card: nap start when napping, else night sleep start.
+    private var sleepStatusStartTimeString: String? {
+        if controller.napStartDate != nil { return controller.napStartTimeString }
+        return controller.sleepStartTimeString
+    }
+
+    /// Today's Naps card text: always from today's stored nap entries (count + total duration).
+    private var todaysNapsCardText: String {
+        let today = Calendar.current.startOfDay(for: Date())
+        let total = manualStore.napDuration(for: today)
+        let count = manualStore.napEntries(for: today).count
+        return "\(total.durationString) across \(count) nap\(count == 1 ? "" : "s")"
+    }
+
     private var familyNameDisplay: String {
         let name = householdService.currentHousehold?.name ?? "My Family"
         return name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "My Family" : name
@@ -35,7 +66,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            (controller.isAsleep ? Color.sleepBackground : Color.awakeBackground).ignoresSafeArea()
+            (sleepStatusIsSleeping ? Color.sleepBackground : Color.awakeBackground).ignoresSafeArea()
         }
         .refreshable { controller.refresh() }
         .overlay {
@@ -44,12 +75,12 @@ struct HomeView: View {
                     VStack(spacing: Spacing.lg) {
                         homeHeader
                         SleepStatusCard(
-                            isAsleep: controller.isAsleep,
-                            duration: controller.isAsleep ? "Sleeping for \(controller.durationString)" : "Awake for \(controller.durationString)",
-                            startTime: controller.sleepStartTimeString
+                            isAsleep: sleepStatusIsSleeping,
+                            duration: sleepStatusDurationText,
+                            startTime: sleepStatusStartTimeString
                         )
                         sleepTrackingButtons
-                        secondaryCards(isAsleep: controller.isAsleep)
+                        secondaryCards(isAsleep: sleepStatusIsSleeping)
                     }
                     .padding(Spacing.lg)
                 }
@@ -165,7 +196,7 @@ struct HomeView: View {
                     icon: "sun.max.fill",
                     iconColor: Color(hex: "F59E0B"),
                     title: "Today's Naps",
-                    value: controller.todaysNapsString
+                    value: todaysNapsCardText
                 )
             }
             .buttonStyle(.plain)

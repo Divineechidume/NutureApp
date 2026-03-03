@@ -29,6 +29,8 @@ final class HomeController: ObservableObject {
     private let mlPredictionService = MLPredictionService()
     private var cancellable: AnyCancellable?
     private var manualStoreCancellable: AnyCancellable?
+    /// Fires every minute while a nap is in progress to refresh live duration.
+    private var napLiveTimer: Timer?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
 
@@ -84,8 +86,22 @@ final class HomeController: ObservableObject {
         return "2h 15m" // Mock when awake
     }
 
+    /// Live nap duration (updates every minute via napLiveTimer). Use when napStartDate != nil.
+    var napDurationString: String {
+        guard let start = napStartDate else { return "" }
+        return Date().timeIntervalSince(start).durationString
+    }
+
     var sleepStartTimeString: String? {
         guard isAsleep, let start = sleepStartDate else { return nil }
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f.string(from: start)
+    }
+
+    /// Start time of current nap (for status card when napping).
+    var napStartTimeString: String? {
+        guard let start = napStartDate else { return nil }
         let f = DateFormatter()
         f.timeStyle = .short
         return f.string(from: start)
@@ -144,13 +160,21 @@ final class HomeController: ObservableObject {
         refresh()
     }
 
-    /// Start Nap: record nap start (mock), uses monitor if available.
+    /// Start Nap: record nap start (mock), show status as sleeping, begin live duration timer.
     func startNap() {
+        napLiveTimer?.invalidate()
+        napLiveTimer = nil
         napStartDate = Date()
+        napLiveTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+        RunLoop.main.add(napLiveTimer!, forMode: .common)
     }
 
-    /// End Nap: compute duration, add to manual history (mock).
+    /// End Nap: compute duration, add to today's nap history, update card, clear status.
     func endNap() {
+        napLiveTimer?.invalidate()
+        napLiveTimer = nil
         guard let start = napStartDate else { return }
         let end = Date()
         ManualSleepStore.shared.add(startDate: start, endDate: end, isNighttime: false, childId: currentChildId)
