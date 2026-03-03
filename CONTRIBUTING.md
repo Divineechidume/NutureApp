@@ -42,7 +42,7 @@ The Simulator does not support Bluetooth. To test pairing, BLE streaming, or rol
 1. **Enable Developer Mode** on your iPhone (required on iOS 16+): **Settings → Privacy & Security → Developer Mode** → turn on. Your device will restart.
 2. Connect your iPhone to your Mac via USB.
 3. In Xcode, select your device as the run destination (instead of a Simulator).
-4. Open **Signing & Capabilities** for the Nurture target and set **Team** to your personal Apple ID. If the project has a hardcoded team and you see signing errors, change it to your own.
+4. Open **Signing & Capabilities** for the Nurture target and set **Team** to your personal Apple ID. If the project has a hardcoded bundle identifier and you see signing errors, change it to something unique. 
 5. Build and run (⌘R).
 6. On first run, if the app fails to launch: go to **Settings → General → VPN & Device Management** on your device, trust your developer certificate, then try again.
 

@@ -36,6 +36,7 @@
 		A1000000000000000000001B /* Date+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* Date+Formatting.swift */; };
 		A1000000000000000000001C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* Assets.xcassets */; };
 		A1000000000000000000001D /* RolloverAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* RolloverAlertView.swift */; };
+		A1000000000000000000002C /* NotificationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* NotificationDetailView.swift */; };
 		A1000000000000000000001E /* ChildProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* ChildProfileStore.swift */; };
 		A1000000000000000000001F /* Household.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* Household.swift */; };
 		A10000000000000000000020 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* Member.swift */; };
@@ -50,8 +51,6 @@
 		A10000000000000000000029 /* ChildrenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* ChildrenStore.swift */; };
 		A1000000000000000000002A /* AddChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* AddChildView.swift */; };
 		A1000000000000000000002B /* EditFamilyNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* EditFamilyNameView.swift */; };
-		A1000000000000000000002C /* SleepRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* SleepRecommendation.swift */; };
-		A1000000000000000000002D /* AISleepRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002D /* AISleepRecommendationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -99,8 +98,7 @@
 		A20000000000000000000029 /* ChildrenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildrenStore.swift; sourceTree = "<group>"; };
 		A2000000000000000000002A /* AddChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChildView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002B /* EditFamilyNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditFamilyNameView.swift; sourceTree = "<group>"; };
-		A2000000000000000000002C /* SleepRecommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepRecommendation.swift; sourceTree = "<group>"; };
-		A2000000000000000000002D /* AISleepRecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISleepRecommendationService.swift; sourceTree = "<group>"; };
+		A2000000000000000000002C /* NotificationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,7 +161,6 @@
 				A20000000000000000000005 /* NurtureBand.swift */,
 				A20000000000000000000004 /* SleepSession.swift */,
 				A20000000000000000000006 /* NapPrediction.swift */,
-				A2000000000000000000002C /* SleepRecommendation.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -174,6 +171,7 @@
 				A20000000000000000000007 /* RootView.swift */,
 				A20000000000000000000008 /* MainTabView.swift */,
 				A2000000000000000000001D /* RolloverAlertView.swift */,
+				A2000000000000000000002C /* NotificationDetailView.swift */,
 				A4000000000000000000000A /* Onboarding */,
 				A4000000000000000000000B /* Home */,
 				A4000000000000000000000C /* History */,
@@ -200,7 +198,6 @@
 				A20000000000000000000016 /* SleepDetectionService.swift */,
 				A20000000000000000000017 /* NotificationService.swift */,
 				A20000000000000000000018 /* MLPredictionService.swift */,
-				A2000000000000000000002D /* AISleepRecommendationService.swift */,
 				A20000000000000000000022 /* SecureStorage.swift */,
 				A20000000000000000000023 /* HouseholdService.swift */,
 				A20000000000000000000024 /* SyncCoordinator.swift */,
@@ -379,13 +376,12 @@
 				A1000000000000000000001A /* DesignTokens.swift in Sources */,
 				A1000000000000000000001B /* Date+Formatting.swift in Sources */,
 				A1000000000000000000001D /* RolloverAlertView.swift in Sources */,
+				A1000000000000000000002C /* NotificationDetailView.swift in Sources */,
 				A1000000000000000000001E /* ChildProfileStore.swift in Sources */,
 				A10000000000000000000026 /* HouseholdStore.swift in Sources */,
 				A10000000000000000000029 /* ChildrenStore.swift in Sources */,
 				A1000000000000000000002A /* AddChildView.swift in Sources */,
 				A1000000000000000000002B /* EditFamilyNameView.swift in Sources */,
-				A1000000000000000000002C /* SleepRecommendation.swift in Sources */,
-				A1000000000000000000002D /* AISleepRecommendationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
