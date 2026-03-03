@@ -362,49 +362,29 @@ struct InfoCard: View {
     }
 }
 
-// MARK: - Nap Prediction Card (expandable reasoning)
+// MARK: - Nap Recommendation Card (state-based, no timestamp)
 
-struct NapPredictionCard: View {
-    let prediction: NapPrediction
-    @State private var showDetails = false
+struct NapRecommendationCard: View {
+    let recommendation: NapRecommendation
 
     private let iconColor = Color(hex: "EAB308")
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: "lightbulb.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(iconColor)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(iconColor.opacity(0.15)))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Next Nap")
-                        .font(.labelSmall)
-                        .foregroundColor(.textSecondary)
-                    Text(prediction.message)
-                        .font(.bodyMedium)
-                        .foregroundColor(.textPrimary)
-                }
-                Spacer()
-                Image(systemName: showDetails ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: iconName)
+                .font(.system(size: 18))
+                .foregroundColor(iconColor)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(iconColor.opacity(0.15)))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(titleText)
+                    .font(.labelSmall)
                     .foregroundColor(.textSecondary)
+                Text(recommendation.message)
+                    .font(.bodyMedium)
+                    .foregroundColor(.textPrimary)
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showDetails.toggle()
-                }
-            }
-
-            // Transparency Layer: Show reasoning for AI predictions
-            if showDetails && !prediction.reasoning.isEmpty {
-                Text(prediction.reasoning)
-                    .font(.bodySmall)
-                    .foregroundColor(.textSecondary)
-                    .padding(.top, Spacing.xs)
-            }
+            Spacer()
         }
         .padding(Spacing.sm)
         .background(
@@ -412,6 +392,14 @@ struct NapPredictionCard: View {
                 .fill(Color.cardBackground)
                 .cardShadowSecondary()
         )
+    }
+
+    private var titleText: String {
+        recommendation.status == .bedtimeApproaching ? "Tonight" : "Next Nap"
+    }
+
+    private var iconName: String {
+        recommendation.status == .bedtimeApproaching ? "moon.fill" : "lightbulb.fill"
     }
 }
 
