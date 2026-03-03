@@ -90,10 +90,10 @@ final class HomeController: ObservableObject {
             return Date().timeIntervalSince(start).durationString
         }
         if napStartDate != nil { return "" } // Napping uses napDurationString
-        if let end = lastSleepEndTime {
+        if let end = lastSleepEndTime, end <= Date() {
             return Date().timeIntervalSince(end).durationString
         }
-        return "2h 15m" // Fallback when no history
+        return "2h 15m" // Fallback when no history or lastSleepEndTime in future
     }
 
     /// Most recent completed sleep or nap end time (source of truth: ManualSleepStore).
@@ -101,11 +101,12 @@ final class HomeController: ObservableObject {
         ManualSleepStore.shared.lastSleepEndDate(childId: currentChildId)
     }
 
-    /// Awake duration in seconds. 0 when napping; otherwise now - lastSleepEndTime.
+    /// Awake duration in seconds. 0 when napping or when lastSleepEndTime is in the future; otherwise now - lastSleepEndTime.
     var awakeDuration: TimeInterval {
         if napStartDate != nil { return 0 }
         guard let end = lastSleepEndTime else { return 0 }
-        return max(0, Date().timeIntervalSince(end))
+        if end > Date() { return 0 }
+        return Date().timeIntervalSince(end)
     }
 
     /// Live nap duration (updates every minute via napLiveTimer). Use when napStartDate != nil.
@@ -205,10 +206,11 @@ final class HomeController: ObservableObject {
         refresh()
     }
 
-    /// Log Nap (manual): save nap with given start and duration to history (mock).
+    /// Log Nap (manual): save nap with given start and duration to history. End time is clamped to now if in the future.
     func logNap(startDate: Date, durationSeconds: TimeInterval) {
         let endDate = startDate.addingTimeInterval(durationSeconds)
-        ManualSleepStore.shared.add(startDate: startDate, endDate: endDate, isNighttime: false, childId: currentChildId)
+        let clampedEnd = endDate > Date() ? Date() : endDate
+        ManualSleepStore.shared.add(startDate: startDate, endDate: clampedEnd, isNighttime: false, childId: currentChildId)
         syncTodaysNapsFromStore()
         refresh()
     }
