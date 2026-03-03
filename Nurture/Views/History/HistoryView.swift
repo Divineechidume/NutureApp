@@ -10,6 +10,7 @@ import SwiftUI
 /// Calendar view of sleep history. Month grid, tap day to see sessions below.
 struct HistoryView: View {
     @ObservedObject var controller: HistoryController
+    @ObservedObject private var manualStore = ManualSleepStore.shared
     @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
 
     private var showEmptyState: Bool {
@@ -142,10 +143,9 @@ struct HistoryView: View {
         }
 
         // Current mock week (week of Mar 1, 2026): show data only through Tue, Mar 3, 2026.
-        // Do NOT include data for Wed, Mar 4 (demo day).
+        // Tuesday Mar 3 = 9 hours 15 minutes. Do NOT include data for Wed, Mar 4 (demo day).
         if calendar.isDate(start, inSameDayAs: weekMar1) {
-            // Sun Mar 1, Mon Mar 2, Tue Mar 3, then nil for Wed–Sat.
-            return [9.1, 8.6, 8.0, nil, nil, nil, nil]
+            return [9.1, 8.6, 9.25, nil, nil, nil, nil] // Sun, Mon, Tue 9h15m, Wed–Sat empty
         }
 
         // Other weeks: no mock history.
@@ -162,15 +162,23 @@ struct HistoryView: View {
     }
 
     private func daySummaryForDisplay(for date: Date) -> DaySummary? {
-        if let real = controller.daySummary(for: date) { return real }
-        // Mock-only weekly view: synthesize a DaySummary so the existing detail section stays intact.
-        guard let hours = mockHours(for: date), hours > 0 else { return nil }
         let dayStart = calendar.startOfDay(for: date)
-        let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart
-        let bedtime = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay) ?? prevDay
-        let wake = bedtime.addingTimeInterval(hours * 3600)
-        let session = SleepSession(startDate: bedtime, endDate: wake, isNighttime: true, childId: UUID())
-        return DaySummary(id: dayStart, date: dayStart, sessions: [session])
+        var sessions: [SleepSession] = ManualSleepStore.shared.sessions(for: date)
+
+        // Controller data (e.g. loadMockHistory) when present for this date
+        if let existing = controller.daySummary(for: date) {
+            sessions.append(contentsOf: existing.sessions)
+        }
+        // Mock nighttime for this day when no sessions yet
+        if sessions.isEmpty, let mockH = mockHours(for: date), mockH > 0 {
+            let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart
+            let bedtime = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay) ?? prevDay
+            let wake = bedtime.addingTimeInterval(mockH * 3600)
+            sessions.append(SleepSession(startDate: bedtime, endDate: wake, isNighttime: true, childId: UUID()))
+        }
+
+        if sessions.isEmpty { return nil }
+        return DaySummary(id: dayStart, date: dayStart, sessions: sessions)
     }
 
     private func mockHours(for date: Date) -> Double? {
@@ -192,10 +200,13 @@ struct HistoryView: View {
             let hours: Double?
         }
 
+        let manualStore = ManualSleepStore.shared
         let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
             let label = weekdays[index]
-
-            let hours = mockHours(for: date)
+            let mockH = mockHours(for: date)
+            let manualSeconds = manualStore.totalDuration(for: date)
+            let manualH = manualSeconds / 3600
+            let hours: Double? = (mockH ?? 0) + manualH > 0 ? (mockH ?? 0) + manualH : nil
 
             return DayBucket(date: date, label: label, hours: hours)
         }

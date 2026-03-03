@@ -15,6 +15,10 @@ struct HomeView: View {
     @ObservedObject var householdService: HouseholdService
 
     @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
+    @State private var showNapOptions = false
+    @State private var showLogNapSheet = false
+    @State private var logNapStart = Date()
+    @State private var logNapMinutes: Int = 45
 
     /// Whether a device is paired. In demo mode: true unless "Show empty states" is on; otherwise from BluetoothService.
     private var hasDevice: Bool {
@@ -43,6 +47,7 @@ struct HomeView: View {
                             duration: controller.isAsleep ? "Sleeping for \(controller.durationString)" : "Awake for \(controller.durationString)",
                             startTime: controller.sleepStartTimeString
                         )
+                        sleepTrackingButtons
                         secondaryCards(isAsleep: controller.isAsleep)
                     }
                     .padding(Spacing.lg)
@@ -51,6 +56,90 @@ struct HomeView: View {
                 NoDevicePairedView(onPairTapped: { /* Navigate to pairing */ })
             }
         }
+        .confirmationDialog("Nap", isPresented: $showNapOptions, titleVisibility: .visible) {
+            Button("Start Nap") {
+                controller.startNap()
+            }
+            Button("Log Nap") {
+                logNapStart = Date()
+                logNapMinutes = 45
+                showLogNapSheet = true
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Track a nap with the monitor or enter manually.")
+        }
+        .sheet(isPresented: $showLogNapSheet) {
+            LogNapSheet(
+                startTime: $logNapStart,
+                durationMinutes: $logNapMinutes,
+                onSave: {
+                    controller.logNap(startDate: logNapStart, durationSeconds: TimeInterval(logNapMinutes * 60))
+                    showLogNapSheet = false
+                },
+                onCancel: { showLogNapSheet = false }
+            )
+        }
+    }
+
+    private var sleepTrackingButtons: some View {
+        HStack(spacing: Spacing.sm) {
+            if controller.isAsleep {
+                Button {
+                    controller.endSleep()
+                } label: {
+                    Label("End Sleep", systemImage: "moon.zzz.fill")
+                        .font(.labelMedium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.sm)
+                        .background(RoundedRectangle(cornerRadius: CornerRadius.small).fill(Color.sageGreen))
+                }
+                .buttonStyle(.plain)
+            } else if controller.napStartDate != nil {
+                Button {
+                    controller.endNap()
+                } label: {
+                    Label("End Nap", systemImage: "sun.max.fill")
+                        .font(.labelMedium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.sm)
+                        .background(RoundedRectangle(cornerRadius: CornerRadius.small).fill(Color(hex: "F59E0B")))
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button {
+                    controller.startSleep()
+                } label: {
+                    Label("Start Sleep", systemImage: "moon.zzz.fill")
+                        .font(.labelMedium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.sm)
+                        .background(RoundedRectangle(cornerRadius: CornerRadius.small).fill(Color.sageGreen))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    showNapOptions = true
+                } label: {
+                    Label("Nap", systemImage: "sun.max.fill")
+                        .font(.labelMedium)
+                        .foregroundColor(.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.small)
+                                .fill(Color.cardBackground)
+                                .overlay(RoundedRectangle(cornerRadius: CornerRadius.small).stroke(Color.sageGreen.opacity(0.5), lineWidth: 1))
+                                .cardShadowSecondary()
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, Spacing.md)
     }
 
     private func secondaryCards(isAsleep: Bool) -> some View {
@@ -398,6 +487,61 @@ struct NoDevicePairedView: View {
         .frame(maxHeight: .infinity)
         .padding(Spacing.lg)
         .background(Color.cream)
+    }
+}
+
+// MARK: - Log Nap (manual entry) sheet
+
+struct LogNapSheet: View {
+    @Binding var startTime: Date
+    @Binding var durationMinutes: Int
+    var onSave: () -> Void
+    var onCancel: () -> Void
+
+    private let durationOptions = [15, 30, 45, 60, 90, 120]
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    DatePicker("Start time", selection: $startTime, displayedComponents: [.date, .hourAndMinute])
+                } header: {
+                    Text("Nap start")
+                }
+
+                Section {
+                    Picker("Duration", selection: $durationMinutes) {
+                        ForEach(durationOptions, id: \.self) { mins in
+                            Text(durationString(mins)).tag(mins)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                } header: {
+                    Text("Duration")
+                }
+            }
+            .navigationTitle("Log Nap")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { onCancel() }
+                        .foregroundColor(.sageGreen)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { onSave() }
+                        .fontWeight(.semibold)
+                        .foregroundColor(.sageGreen)
+                }
+            }
+            .background(Color.cream)
+        }
+    }
+
+    private func durationString(_ minutes: Int) -> String {
+        if minutes < 60 { return "\(minutes) min" }
+        let h = minutes / 60
+        let m = minutes % 60
+        return m == 0 ? "\(h) hr" : "\(h) hr \(m) min"
     }
 }
 
