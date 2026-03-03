@@ -63,17 +63,12 @@ struct RolloverAlertView: View {
         VStack(spacing: Spacing.lg) {
             Spacer()
 
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 64))
-                .foregroundColor(.peachCoral)
-                .padding(.top, Spacing.xl)
-
             VStack(spacing: Spacing.xs) {
-                Text("Check on \(childName)")
+                Text("\(childName) may have rolled over")
                     .font(.displayMedium)
                     .foregroundColor(.textPrimary)
 
-                Text("\(childName) rolled over at \(timeString)")
+                Text("Your baby, \(childName), rolled onto their tummy at \(timeString). Many babies begin rolling as they grow. If placed on their back to sleep, you may want to gently reposition them. 💗")
                     .font(.bodyMedium)
                     .foregroundColor(.textSecondary)
                     .multilineTextAlignment(.center)
@@ -88,7 +83,7 @@ struct RolloverAlertView: View {
                     .padding(.vertical, Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: CornerRadius.small)
-                            .fill(Color.peachCoral)
+                            .fill(Color.sageGreen)
                     )
             }
             .padding(.horizontal, Spacing.lg)
@@ -100,7 +95,7 @@ struct RolloverAlertView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.cream)
+        .background(Color.white)
     }
 
     private var relativeTimeString: String {

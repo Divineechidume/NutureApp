@@ -20,47 +20,13 @@ struct NotificationPayload: Identifiable, Equatable {
     }
 }
 
-// MARK: - In-file presentation model & copy helpers
-
-/// Lightweight enum describing notification kinds handled by the app.
-enum NotificationType {
-    case rollover
-    case sleepPrediction
-    case unknown
-}
-
-/// Presentation model: simple, local struct used for normalizing payloads when needed.
-struct NotificationPresentation {
-    let id: String
-    let type: NotificationType
-    let displayTitle: String
-    let displayBody: String
-    let childName: String?
-    let timestamp: Date?
-    let userInfo: [AnyHashable: Any]
-}
-
-func makePresentation(from payload: NotificationPayload) -> NotificationPresentation {
-    let info = payload.userInfo
-    let timestamp: Date? = (info["deliveryTime"] as? TimeInterval).flatMap { Date(timeIntervalSince1970: $0) } ?? (info["scheduledTime"] as? TimeInterval).flatMap { Date(timeIntervalSince1970: $0) }
-    let childName = info["childName"] as? String
-    let rawType = (info["notificationType"] as? String)?.lowercased()
-    let type: NotificationType
-    switch rawType {
-    case "sleepprediction": type = .sleepPrediction
-    case "rollover": type = .rollover
-    default: type = .unknown
-    }
-    let displayTitle = (info["sheetTitle"] as? String) ?? payload.title
-    let displayBody = (info["sheetBody"] as? String) ?? payload.body
-    return NotificationPresentation(id: payload.id, type: type, displayTitle: displayTitle, displayBody: displayBody, childName: childName, timestamp: timestamp, userInfo: info)
-}
+// MARK: - In-file copy helpers
 
 func rolloverSheetCopy(childName: String, rolloverTime: Date) -> (title: String, body: String) {
     let headerName = childName.isEmpty ? "Baby" : childName
     let f = DateFormatter(); f.timeStyle = .short
     let timeString = f.string(from: rolloverTime)
-    let title = "\(headerName) may have rolled over 🧸"
+    let title = "\(headerName) may have rolled over."
     let body = "Your baby, \(headerName), rolled onto their tummy at \(timeString). Many babies begin rolling as they grow. If placed on their back to sleep, you may want to gently reposition them. 💗"
     return (title, body)
 }
