@@ -31,6 +31,8 @@ final class HomeController: ObservableObject {
     private var manualStoreCancellable: AnyCancellable?
     /// Fires every minute while a nap is in progress to refresh live duration.
     private var napLiveTimer: Timer?
+    /// Fires every minute when awake so "Awake for Xh Ym" updates from history.
+    private var awakeLiveTimer: Timer?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
 
@@ -61,8 +63,11 @@ final class HomeController: ObservableObject {
         }
         manualStoreCancellable = ManualSleepStore.shared.objectWillChange.sink { [weak self] _ in
             self?.syncTodaysNapsFromStore()
+            self?.updateNapPredictionFromHistory()
         }
         syncTodaysNapsFromStore()
+        updateNapPredictionFromHistory()
+        startAwakeLiveTimerIfNeeded()
 
         if useDemoMode {
             // Demo: fully mocked data for UI previews and simulator
@@ -79,11 +84,28 @@ final class HomeController: ObservableObject {
 
     // MARK: - Computed (for View)
 
+    /// Duration for status: night sleep elapsed, or when awake = time since last sleep/nap end (from history).
     var durationString: String {
         if isAsleep, let start = sleepStartDate {
             return Date().timeIntervalSince(start).durationString
         }
-        return "2h 15m" // Mock when awake
+        if napStartDate != nil { return "" } // Napping uses napDurationString
+        if let end = lastSleepEndTime {
+            return Date().timeIntervalSince(end).durationString
+        }
+        return "2h 15m" // Fallback when no history
+    }
+
+    /// Most recent completed sleep or nap end time (source of truth: ManualSleepStore).
+    var lastSleepEndTime: Date? {
+        ManualSleepStore.shared.lastSleepEndDate(childId: currentChildId)
+    }
+
+    /// Awake duration in seconds. 0 when napping; otherwise now - lastSleepEndTime.
+    var awakeDuration: TimeInterval {
+        if napStartDate != nil { return 0 }
+        guard let end = lastSleepEndTime else { return 0 }
+        return max(0, Date().timeIntervalSince(end))
     }
 
     /// Live nap duration (updates every minute via napLiveTimer). Use when napStartDate != nil.
@@ -198,6 +220,26 @@ final class HomeController: ObservableObject {
         todaysNapCount = ManualSleepStore.shared.napEntries(for: today).count
     }
 
+    /// Recompute nap prediction from history: lastSleepEndTime + configurable wake window (ML age-based).
+    /// Call when: nap logged, nap ends, nap deleted, or every minute when awake.
+    private func updateNapPredictionFromHistory() {
+        let wakeTime = lastSleepEndTime ?? Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()
+        napPrediction = mlPredictionService.predictNextNap(
+            wakeTime: wakeTime,
+            ageRange: child?.ageRange ?? .sixToTwelveMonths,
+            todaysNapsSeconds: todaysNapsDuration
+        )
+    }
+
+    /// Start a 60s timer when awake so "Awake for Xh Ym" updates every minute from lastSleepEndTime.
+    private func startAwakeLiveTimerIfNeeded() {
+        awakeLiveTimer?.invalidate()
+        awakeLiveTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+        RunLoop.main.add(awakeLiveTimer!, forMode: .common)
+    }
+
     private func loadMockData() {
         if let store = childrenStore {
             child = store.selectedChild
@@ -214,12 +256,7 @@ final class HomeController: ObservableObject {
         lastNightTotalDuration = 9 * 3600 + 15 * 60 // 9h 15m
         todaysNapsDuration = 1 * 3600 + 30 * 60
         todaysNapCount = 1
-        if let wakeTime = sleepStartDate {
-            napPrediction = mlPredictionService.predictNextNap(
-                wakeTime: wakeTime,
-                ageRange: child?.ageRange ?? .sixToTwelveMonths
-            )
-        }
+        updateNapPredictionFromHistory()
         sleepRecommendation = aiSleepRecService.recommendation(
             for: child,
             lastNightTotalSeconds: lastNightTotalDuration,
@@ -259,12 +296,7 @@ final class HomeController: ObservableObject {
             todaysNapCount = 2
         }
 
-        // Use a simple "awake for about 2 hours" assumption for next‑nap timing.
-        let assumedLastWakeTime = Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()
-        napPrediction = mlPredictionService.predictNextNap(
-            wakeTime: assumedLastWakeTime,
-            ageRange: child?.ageRange ?? .sixToTwelveMonths
-        )
+        updateNapPredictionFromHistory()
 
         sleepRecommendation = aiSleepRecService.recommendation(
             for: child,

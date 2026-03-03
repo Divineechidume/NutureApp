@@ -90,4 +90,11 @@ final class ManualSleepStore: ObservableObject {
             .filter { calendar.isDate($0.startDate, inSameDayAs: dayStart) }
             .map { $0.toSleepSession() }
     }
+
+    /// End time of the most recent completed sleep or nap (for awake duration and next-nap prediction).
+    /// Pass childId to scope to one child, or nil for all entries.
+    func lastSleepEndDate(childId: UUID?) -> Date? {
+        let list = childId == nil ? entries : entries.filter { $0.childId == childId }
+        return list.map(\.endDate).max()
+    }
 }
