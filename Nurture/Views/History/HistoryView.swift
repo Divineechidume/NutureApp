@@ -13,11 +13,22 @@ struct HistoryView: View {
     @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
 
     private var showEmptyState: Bool {
-        (useDemoMode && demoShowEmptyStates) || controller.daySummaries.isEmpty
+        // Preserve demo "empty state" toggle for design previews; otherwise
+        // show the weekly view and handle missing data per-week.
+        (useDemoMode && demoShowEmptyStates)
     }
 
     private let calendar = Calendar.current
     private let weekdays = ["S", "M", "T", "W", "T", "F", "S"]
+    @State private var weekOffset: Int = 0
+
+    /// Mock total sleep hours for one demo week (Sun–Sat).
+    private let mockWeekDurations: [Double] = [9.5, 8.2, 7.9, 10.0, 8.7, 9.0, 8.4]
+
+    private var currentWeekStart: Date {
+        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: Date()) ?? Date()
+        return calendar.dateInterval(of: .weekOfYear, for: reference)?.start ?? calendar.startOfDay(for: reference)
+    }
 
     var body: some View {
         NavigationView {
@@ -29,8 +40,8 @@ struct HistoryView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: Spacing.lg) {
-                            monthHeader
-                            calendarGrid
+                            weekHeader
+                            weeklyBarChart
                             if let day = controller.selectedDate.flatMap({ controller.daySummary(for: $0) }) {
                                 selectedDayDetail(day)
                             }
@@ -44,10 +55,12 @@ struct HistoryView: View {
         }
     }
 
-    private var monthHeader: some View {
+    private var weekHeader: some View {
         HStack {
             Button {
-                controller.goToPreviousMonth()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    weekOffset -= 1
+                }
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 18, weight: .semibold))
@@ -55,12 +68,14 @@ struct HistoryView: View {
                     .frame(width: 44, height: 44)
             }
             Spacer()
-            Text(monthYearString(from: controller.displayedMonth))
+            Text(weekTitle(from: currentWeekStart))
                 .font(.headingMedium)
                 .foregroundColor(.textPrimary)
             Spacer()
             Button {
-                controller.goToNextMonth()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    weekOffset += 1
+                }
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 18, weight: .semibold))
@@ -70,29 +85,87 @@ struct HistoryView: View {
         }
     }
 
-    private var calendarGrid: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                ForEach(Array(weekdays.enumerated()), id: \.offset) { _, d in
-                    Text(d)
-                        .font(.labelSmall)
-                        .foregroundColor(.textSecondary)
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .padding(.vertical, Spacing.xs)
+    private var weeklyBarChart: some View {
+        let dates = (0..<7).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: currentWeekStart)
+        }
 
-            let days = daysInMonth(for: controller.displayedMonth)
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(0..<days.count, id: \.self) { i in
-                    if let dayNum = days[i] {
-                        dayCell(dayNumber: dayNum, month: controller.displayedMonth)
-                    } else {
-                        Color.clear
-                            .frame(height: 36)
+        struct DayBucket {
+            let date: Date
+            let label: String
+            let hours: Double?
+        }
+
+        let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
+            let label = weekdays[index]
+
+            let hours: Double?
+            if useDemoMode && weekOffset == 0 && index < mockWeekDurations.count {
+                hours = mockWeekDurations[index]
+            } else if let summary = controller.daySummary(for: date) {
+                hours = summary.totalDuration / 3600
+            } else {
+                hours = nil
+            }
+
+            return DayBucket(date: date, label: label, hours: hours)
+        }
+
+        let availableHours = dayBuckets.compactMap { $0.hours }
+        let hasDataThisWeek = !availableHours.isEmpty
+        let maxHours = max(availableHours.max() ?? 10, 1)
+
+        return VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Text("This week's sleep")
+                    .font(.headingSmall)
+                    .foregroundColor(.textPrimary)
+                Spacer()
+            }
+
+            if !hasDataThisWeek {
+                Text("No history collected for this week")
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+                    .padding(.top, Spacing.xs)
+            } else {
+                GeometryReader { proxy in
+                    HStack(alignment: .bottom, spacing: Spacing.xs) {
+                        ForEach(0..<dayBuckets.count, id: \.self) { index in
+                            let bucket = dayBuckets[index]
+                            let value = bucket.hours ?? 0
+                            let heightRatio = CGFloat(value) / CGFloat(maxHours)
+                            let barHeight = max(4, proxy.size.height * heightRatio)
+
+                            VStack(spacing: 4) {
+                                if value > 0 {
+                                    Text(String(format: "%.1fh", value))
+                                        .font(.labelSmall)
+                                        .foregroundColor(.textSecondary)
+                                } else {
+                                    Text(" ")
+                                        .font(.labelSmall)
+                                }
+
+                                RoundedRectangle(cornerRadius: CornerRadius.small)
+                                    .fill(Color.sageGreen.opacity(value > 0 ? 0.9 : 0.2))
+                                    .frame(height: barHeight)
+                                    .frame(maxWidth: .infinity)
+                                    .onTapGesture {
+                                        if let _ = controller.daySummary(for: bucket.date) {
+                                            controller.selectDate(bucket.date)
+                                        }
+                                    }
+
+                                Text(bucket.label)
+                                    .font(.labelSmall)
+                                    .foregroundColor(.textSecondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
                     }
                 }
+                .frame(height: 140)
             }
         }
         .padding(Spacing.md)
@@ -101,37 +174,6 @@ struct HistoryView: View {
                 .fill(Color.white)
                 .cardShadowSecondary()
         )
-    }
-
-    @ViewBuilder
-    private func dayCell(dayNumber: Int, month: Date) -> some View {
-        if let date = calendar.date(bySetting: .day, value: dayNumber, of: month) {
-            let dayStart = calendar.startOfDay(for: date)
-            let hasData = controller.datesWithData(in: controller.displayedMonth).contains(dayStart)
-            let isSelected = controller.selectedDate.map { calendar.isDate($0, inSameDayAs: date) } ?? false
-
-            Button {
-                controller.selectDate(dayStart)
-            } label: {
-                VStack(spacing: 2) {
-                    Text("\(dayNumber)")
-                        .font(.bodyMedium)
-                        .foregroundColor(isSelected ? .white : .textPrimary)
-                    if hasData {
-                        Circle()
-                            .fill(isSelected ? Color.white : Color.sageGreen)
-                            .frame(width: 5, height: 5)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 36)
-                .background(
-                    RoundedRectangle(cornerRadius: CornerRadius.small)
-                        .fill(isSelected ? Color.sageGreen : Color.clear)
-                )
-            }
-            .buttonStyle(.plain)
-        }
     }
 
     private func selectedDayDetail(_ day: DaySummary) -> some View {
@@ -166,10 +208,10 @@ struct HistoryView: View {
         }
     }
 
-    private func monthYearString(from date: Date) -> String {
+    private func weekTitle(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: date)
+        formatter.dateFormat = "MMM d"
+        return "Week of \(formatter.string(from: date))"
     }
 
     /// Returns array of optional day numbers. nil = empty cell for alignment.
