@@ -20,7 +20,7 @@ struct HomeView: View {
     @State private var showLogNapSheet = false
     @State private var showTodayNapsDetail = false
     @State private var logNapStart = Date()
-    @State private var logNapMinutes: Int = 45
+    @State private var logNapEnd = Date()
 
     /// Whether a device is paired. In demo mode: true unless "Show empty states" is on; otherwise from BluetoothService.
     private var hasDevice: Bool {
@@ -96,8 +96,12 @@ struct HomeView: View {
                 },
                 onLogNap: {
                     showNapOptions = false
-                    logNapStart = Date()
-                    logNapMinutes = 45
+                    let now = Date()
+                    let calendar = Calendar.current
+                    let todayStart = calendar.startOfDay(for: now)
+                    logNapStart = now
+                    let defaultEnd = now.addingTimeInterval(45 * 60)
+                    logNapEnd = min(defaultEnd, calendar.date(byAdding: .second, value: 86399, to: todayStart) ?? defaultEnd)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         showLogNapSheet = true
                     }
@@ -108,9 +112,9 @@ struct HomeView: View {
         .sheet(isPresented: $showLogNapSheet) {
             LogNapSheet(
                 startTime: $logNapStart,
-                durationMinutes: $logNapMinutes,
+                endTime: $logNapEnd,
                 onSave: {
-                    controller.logNap(startDate: logNapStart, durationSeconds: TimeInterval(logNapMinutes * 60))
+                    controller.logNap(startDate: logNapStart, durationSeconds: logNapEnd.timeIntervalSince(logNapStart))
                     showLogNapSheet = false
                 },
                 onCancel: { showLogNapSheet = false }
@@ -534,34 +538,45 @@ struct NoDevicePairedView: View {
     }
 }
 
-// MARK: - Log Nap (manual entry) sheet
+// MARK: - Log Nap (manual entry) sheet — today only, start + end time, validation
 
 struct LogNapSheet: View {
     @Binding var startTime: Date
-    @Binding var durationMinutes: Int
+    @Binding var endTime: Date
     var onSave: () -> Void
     var onCancel: () -> Void
 
-    private let durationOptions = [15, 30, 45, 60, 90, 120]
+    private let calendar = Calendar.current
+
+    /// End > start, end not in future, duration ≥ 1 minute. Dates are constrained to today in onAppear.
+    private var canSave: Bool {
+        let now = Date()
+        guard endTime > startTime else { return false }
+        guard endTime <= now else { return false }
+        return endTime.timeIntervalSince(startTime) >= 60
+    }
 
     var body: some View {
         NavigationView {
             Form {
                 Section {
-                    DatePicker("Start time", selection: $startTime, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker("Start time", selection: $startTime, displayedComponents: [.hourAndMinute])
                 } header: {
-                    Text("Nap start")
+                    Text("Start time (today)")
                 }
 
                 Section {
-                    Picker("Duration", selection: $durationMinutes) {
-                        ForEach(durationOptions, id: \.self) { mins in
-                            Text(durationString(mins)).tag(mins)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                    DatePicker("End time", selection: $endTime, displayedComponents: [.hourAndMinute])
                 } header: {
-                    Text("Duration")
+                    Text("End time (today)")
+                }
+
+                if !canSave {
+                    Section {
+                        Text("End time must be after start time, not in the future, and at least 1 minute long.")
+                            .font(.bodySmall)
+                            .foregroundColor(.textSecondary)
+                    }
                 }
             }
             .navigationTitle("Log Nap")
@@ -573,18 +588,25 @@ struct LogNapSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { onSave() }
-                        .foregroundColor(.sageGreen)
+                        .foregroundColor(canSave ? .sageGreen : .gray)
+                        .disabled(!canSave)
                 }
             }
             .background(Color.cream)
+            .onAppear { clampToToday() }
+            .onChange(of: startTime) { _ in clampToToday() }
+            .onChange(of: endTime) { _ in clampToToday() }
         }
     }
 
-    private func durationString(_ minutes: Int) -> String {
-        if minutes < 60 { return "\(minutes) min" }
-        let h = minutes / 60
-        let m = minutes % 60
-        return m == 0 ? "\(h) hr" : "\(h) hr \(m) min"
+    /// Keep start and end on today (no calendar selection).
+    private func clampToToday() {
+        let now = Date()
+        let todayStart = calendar.startOfDay(for: now)
+        let startComp = calendar.dateComponents([.hour, .minute], from: startTime)
+        let endComp = calendar.dateComponents([.hour, .minute], from: endTime)
+        startTime = calendar.date(bySettingHour: startComp.hour ?? 0, minute: startComp.minute ?? 0, second: 0, of: todayStart) ?? startTime
+        endTime = calendar.date(bySettingHour: endComp.hour ?? 0, minute: endComp.minute ?? 0, second: 0, of: todayStart) ?? endTime
     }
 }
 
