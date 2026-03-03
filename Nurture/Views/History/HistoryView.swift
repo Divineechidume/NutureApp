@@ -124,53 +124,41 @@ struct HistoryView: View {
         }
     }
 
-    private func mockDurationsForWeek(start: Date) -> [Double?] {
-        let weekFeb15 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 15))!
-        let weekFeb22 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 22))!
-        let weekMar1 = calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
-
-        // Week of Feb 15, 2026: explicitly empty
-        if calendar.isDate(start, inSameDayAs: weekFeb15) {
-            return Array(repeating: nil, count: 7)
-        }
-
-        // Week of Feb 22, 2026: randomized realistic (deterministic) values within 7–11 hours
-        if calendar.isDate(start, inSameDayAs: weekFeb22) {
-            return (0..<7).map { idx in
-                let seed = Int(start.timeIntervalSince1970) ^ (idx * 1_109_519_737)
-                return deterministicHours(min: 7.0, max: 11.0, seed: seed)
-            }
-        }
-
-        // Current mock week (week of Mar 1, 2026): show data only through Tue, Mar 3, 2026.
-        // Tuesday Mar 3 = 9 hours 15 minutes. Do NOT include data for Wed, Mar 4 (demo day).
-        if calendar.isDate(start, inSameDayAs: weekMar1) {
-            return [9.1, 8.6, 9.25, nil, nil, nil, nil] // Sun, Mon, Tue 9h15m, Wed–Sat empty
-        }
-
-        // Other weeks: no mock history.
-        return Array(repeating: nil, count: 7)
+    /// Single source of truth for History: total sleep (night + naps) for a date in seconds. Used by label and bar; no cached arrays.
+    private func totalSleepSeconds(for date: Date) -> TimeInterval {
+        guard let day = daySummaryForDisplay(for: date) else { return 0 }
+        return day.sessions.reduce(0) { $0 + $1.durationSeconds }
     }
 
-    private func deterministicHours(min: Double, max: Double, seed: Int) -> Double {
-        // Simple deterministic pseudo-random in [0,1)
-        var x = UInt64(bitPattern: Int64(seed))
-        x = x &* 6364136223846793005 &+ 1442695040888963407
-        let unit = Double(x % 10_000) / 10_000.0
-        let value = min + (max - min) * unit
-        return (value * 10).rounded() / 10
+    /// Mock sessions for Tuesday Mar 3, 2026: night 9h 15m + nap 1h 30m + nap 1h = 11h 45m total.
+    private func mockSessionsForTuesdayMar3() -> [SleepSession] {
+        let childId = UUID()
+        let tue = calendar.date(from: DateComponents(year: 2026, month: 3, day: 3))!
+        let prevDay = calendar.date(byAdding: .day, value: -1, to: tue)!
+        let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay)!
+        let nightEnd = nightStart.addingTimeInterval(9 * 3600 + 15 * 60)
+        let nap1Start = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tue)!
+        let nap1End = nap1Start.addingTimeInterval(1 * 3600 + 30 * 60)
+        let nap2Start = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tue)!
+        let nap2End = nap2Start.addingTimeInterval(3600)
+        return [
+            SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+            SleepSession(startDate: nap1Start, endDate: nap1End, isNighttime: false, childId: childId),
+            SleepSession(startDate: nap2Start, endDate: nap2End, isNighttime: false, childId: childId),
+        ]
     }
 
     private func daySummaryForDisplay(for date: Date) -> DaySummary? {
         let dayStart = calendar.startOfDay(for: date)
         var sessions: [SleepSession] = ManualSleepStore.shared.sessions(for: date)
 
-        // Controller data (e.g. loadMockHistory) when present for this date
         if let existing = controller.daySummary(for: date) {
             sessions.append(contentsOf: existing.sessions)
         }
-        // Mock nighttime for this day when no sessions yet
-        if sessions.isEmpty, let mockH = mockHours(for: date), mockH > 0 {
+        if sessions.isEmpty, calendar.isDate(date, inSameDayAs: mockAnchorDate) {
+            sessions = mockSessionsForTuesdayMar3()
+        }
+        if sessions.isEmpty, let mockH = mockHoursForFallback(for: date), mockH > 0 {
             let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart
             let bedtime = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay) ?? prevDay
             let wake = bedtime.addingTimeInterval(mockH * 3600)
@@ -181,12 +169,26 @@ struct HistoryView: View {
         return DaySummary(id: dayStart, date: dayStart, sessions: sessions)
     }
 
-    private func mockHours(for date: Date) -> Double? {
+    /// Fallback mock hours only for weeks that are not the primary mock week (Mar 1 2026).
+    private func mockHoursForFallback(for date: Date) -> Double? {
+        let weekMar1 = calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
         let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
-        let weekdayIndex = calendar.component(.weekday, from: date) - 1 // 0=Sun ... 6=Sat
-        let durations = mockDurationsForWeek(start: weekStart)
-        guard weekdayIndex >= 0, weekdayIndex < durations.count else { return nil }
-        return durations[weekdayIndex]
+        if calendar.isDate(weekStart, inSameDayAs: weekMar1) { return nil }
+        let weekFeb22 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 22))!
+        if calendar.isDate(weekStart, inSameDayAs: weekFeb22) {
+            let weekdayIndex = calendar.component(.weekday, from: date) - 1
+            let seed = Int(weekStart.timeIntervalSince1970) ^ (weekdayIndex * 1_109_519_737)
+            return deterministicHours(min: 7.0, max: 11.0, seed: seed)
+        }
+        return nil
+    }
+
+    private func deterministicHours(min: Double, max: Double, seed: Int) -> Double {
+        var x = UInt64(bitPattern: Int64(seed))
+        x = x &* 6364136223846793005 &+ 1442695040888963407
+        let unit = Double(x % 10_000) / 10_000.0
+        let value = min + (max - min) * unit
+        return (value * 10).rounded() / 10
     }
 
     private var weeklyBarChart: some View {
@@ -200,14 +202,10 @@ struct HistoryView: View {
             let hours: Double?
         }
 
-        let manualStore = ManualSleepStore.shared
         let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
             let label = weekdays[index]
-            let mockH = mockHours(for: date)
-            let manualSeconds = manualStore.totalDuration(for: date)
-            let manualH = manualSeconds / 3600
-            let hours: Double? = (mockH ?? 0) + manualH > 0 ? (mockH ?? 0) + manualH : nil
-
+            let totalSeconds = totalSleepSeconds(for: date)
+            let hours: Double? = totalSeconds > 0 ? totalSeconds / 3600 : nil
             return DayBucket(date: date, label: label, hours: hours)
         }
 
@@ -280,13 +278,14 @@ struct HistoryView: View {
 
     private func selectedDayDetail(_ day: DaySummary) -> some View {
         let deletableIds = ManualSleepStore.shared.entryIds(for: day.date)
+        let totalSeconds = totalSleepSeconds(for: day.date)
         return VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(day.date.formatted(as: .dateLabel))
                         .font(.headingSmall)
                         .foregroundColor(.textPrimary)
-                    Text("Total: \(day.totalDuration.durationString)")
+                    Text("Total: \(totalSeconds.durationString)")
                         .font(.bodySmall)
                         .foregroundColor(.textSecondary)
                 }

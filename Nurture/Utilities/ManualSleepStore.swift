@@ -59,12 +59,17 @@ final class ManualSleepStore: ObservableObject {
             .map(\.id))
     }
 
-    /// Total sleep duration (seconds) for a given calendar day (sessions attributed by start date).
-    func totalDuration(for date: Date) -> TimeInterval {
+    /// Single source of truth for daily totals: sum of all sleep sessions + all naps for the date (by start date).
+    func totalSleepSeconds(for date: Date) -> TimeInterval {
         let dayStart = calendar.startOfDay(for: date)
         return entries
             .filter { calendar.isDate($0.startDate, inSameDayAs: dayStart) }
             .reduce(0) { $0 + $1.durationSeconds }
+    }
+
+    /// Total sleep duration (seconds) for a given calendar day. Delegates to totalSleepSeconds(for:).
+    func totalDuration(for date: Date) -> TimeInterval {
+        totalSleepSeconds(for: date)
     }
 
     /// Nap-only duration for a day (for Today's Naps).
