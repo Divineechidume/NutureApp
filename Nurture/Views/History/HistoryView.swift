@@ -23,16 +23,20 @@ struct HistoryView: View {
     private let weekdays = ["S", "M", "T", "W", "T", "F", "S"]
     @State private var weekOffset: Int = 0
 
-    /// Anchor the weekly mock history to Tue, Mar 3, 2026.
-    private var mockAnchorDate: Date {
-        calendar.date(from: DateComponents(year: 2026, month: 3, day: 3)) ?? Date()
+    /// Demo week only: week of Mar 1, 2026 (Sun = Mar 1, Mon = Mar 2, Tue = Mar 3). Other weeks show "No Data Available".
+    private var demoWeekStart: Date {
+        calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
     }
 
     private var maxWeekOffset: Int { 0 }
 
     private var currentWeekStart: Date {
-        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: mockAnchorDate) ?? mockAnchorDate
+        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: demoWeekStart) ?? demoWeekStart
         return calendar.dateInterval(of: .weekOfYear, for: reference)?.start ?? calendar.startOfDay(for: reference)
+    }
+
+    private var isCurrentWeekDemoWeek: Bool {
+        calendar.isDate(currentWeekStart, inSameDayAs: demoWeekStart)
     }
 
     var body: some View {
@@ -90,18 +94,44 @@ struct HistoryView: View {
         }
     }
 
-    /// Day detail when data exists; blank metrics placeholder when no selection or no data.
+    /// Day detail when data exists; "No Data" when selected day has no data; blank when no selection.
     @ViewBuilder
     private var dayDetailOrPlaceholder: some View {
-        if let selected = controller.selectedDate,
-           let day = daySummaryForDisplay(for: selected) {
-            selectedDayDetail(day)
+        if let selected = controller.selectedDate {
+            if let day = daySummaryForDisplay(for: selected) {
+                selectedDayDetail(day)
+            } else {
+                noDataPlaceholder
+            }
         } else {
             emptyDayDetailPlaceholder
         }
     }
 
-    /// Blank metrics section so layout stays intact when no history or no day selected.
+    /// Shown when a day is selected but has no data (e.g. Wed–Sat of demo week).
+    private var noDataPlaceholder: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Day details")
+                        .font(.headingSmall)
+                        .foregroundColor(.textPrimary)
+                    Text("No Data")
+                        .font(.bodySmall)
+                        .foregroundColor(.textSecondary)
+                }
+                Spacer()
+            }
+            .padding(Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .fill(Color.white)
+                    .cardShadowSecondary()
+            )
+        }
+    }
+
+    /// Blank metrics section when no day selected.
     private var emptyDayDetailPlaceholder: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
@@ -130,81 +160,65 @@ struct HistoryView: View {
         return day.sessions.reduce(0) { $0 + $1.durationSeconds }
     }
 
-    /// Week of Mar 1, 2026 — mock week. Other weeks use fallback or empty.
-    private var mockWeekStart: Date {
-        calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
-    }
+    /// Hardcoded sleep + nap entries for demo week only. Sunday Mar 1, Monday Mar 2, Tuesday Mar 3. Returns nil for all other days.
+    private func hardcodedSessions(for date: Date) -> [SleepSession]? {
+        let childId = UUID(uuidString: "E621E1F8-C36C-495A-93FC-0C247A3E6E5F") ?? UUID()
+        let sun = calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
+        let mon = calendar.date(from: DateComponents(year: 2026, month: 3, day: 2))!
+        let tue = calendar.date(from: DateComponents(year: 2026, month: 3, day: 3))!
+        let feb28 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 28))!
 
-    /// Deterministic pseudo-random in [0, 1) from seed.
-    private func unitRandom(seed: Int) -> Double {
-        var x = UInt64(bitPattern: Int64(seed))
-        x = x &* 6364136223846793005 &+ 1442695040888963407
-        return Double(x % 10_000) / 10_000.0
-    }
-
-    /// Generate mock sessions for a date: random night (8–10.5h) + 1–3 naps (30–90 min each), no overlapping. Total is always computed by summing these.
-    private func mockSessionsForDate(_ date: Date) -> [SleepSession] {
-        let dayStart = calendar.startOfDay(for: date)
-        let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart)!
-        let childId = UUID()
-        let baseSeed = Int(dayStart.timeIntervalSince1970)
-
-        let nightDurationHours = 8.0 + unitRandom(seed: baseSeed) * (10.5 - 8.0)
-        let nightDurationSeconds = (nightDurationHours * 3600).rounded()
-        let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay)!
-        let nightEnd = nightStart.addingTimeInterval(nightDurationSeconds)
-        var sessions: [SleepSession] = [
-            SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
-        ]
-
-        let numNaps = 1 + (Int(unitRandom(seed: baseSeed + 1) * 3) % 3)
-        var nextNapStart = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart)!
-        if nextNapStart < nightEnd { nextNapStart = nightEnd.addingTimeInterval(30 * 60) }
-
-        for i in 0..<numNaps {
-            let napDurationMinutes = 30 + Int(unitRandom(seed: baseSeed + 2 + i * 2) * 61) % 61
-            let napDurationSeconds = TimeInterval(napDurationMinutes * 60)
-            let napEnd = nextNapStart.addingTimeInterval(napDurationSeconds)
-            sessions.append(SleepSession(startDate: nextNapStart, endDate: napEnd, isNighttime: false, childId: childId))
-            nextNapStart = napEnd.addingTimeInterval(45 * 60)
+        if calendar.isDate(date, inSameDayAs: sun) {
+            let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: feb28)!
+            let nightEnd = nightStart.addingTimeInterval(9 * 3600 + 15 * 60)
+            let napStart = calendar.date(bySettingHour: 13, minute: 10, second: 0, of: sun)!
+            let napEnd = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: sun)!
+            return [
+                SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+                SleepSession(startDate: napStart, endDate: napEnd, isNighttime: false, childId: childId),
+            ]
         }
-
-        return sessions
+        if calendar.isDate(date, inSameDayAs: mon) {
+            let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: sun)!
+            let nightEnd = calendar.date(bySettingHour: 4, minute: 25, second: 0, of: mon)!
+            let nap1Start = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: mon)!
+            let nap1End = calendar.date(bySettingHour: 13, minute: 15, second: 0, of: mon)!
+            let nap2Start = calendar.date(bySettingHour: 16, minute: 0, second: 0, of: mon)!
+            let nap2End = calendar.date(bySettingHour: 16, minute: 35, second: 0, of: mon)!
+            return [
+                SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+                SleepSession(startDate: nap1Start, endDate: nap1End, isNighttime: false, childId: childId),
+                SleepSession(startDate: nap2Start, endDate: nap2End, isNighttime: false, childId: childId),
+            ]
+        }
+        if calendar.isDate(date, inSameDayAs: tue) {
+            let nightStart = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: mon)!
+            let nightEnd = calendar.date(bySettingHour: 4, minute: 50, second: 0, of: tue)!
+            let napStart = calendar.date(bySettingHour: 14, minute: 10, second: 0, of: tue)!
+            let napEnd = calendar.date(bySettingHour: 15, minute: 5, second: 0, of: tue)!
+            return [
+                SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
+                SleepSession(startDate: napStart, endDate: napEnd, isNighttime: false, childId: childId),
+            ]
+        }
+        return nil
     }
 
     private func daySummaryForDisplay(for date: Date) -> DaySummary? {
         let dayStart = calendar.startOfDay(for: date)
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? dayStart
+        if !calendar.isDate(weekStart, inSameDayAs: demoWeekStart) {
+            return nil
+        }
         var sessions: [SleepSession] = ManualSleepStore.shared.sessions(for: date)
-
         if let existing = controller.daySummary(for: date) {
             sessions.append(contentsOf: existing.sessions)
         }
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? dayStart
-        if sessions.isEmpty, calendar.isDate(weekStart, inSameDayAs: mockWeekStart) {
-            sessions = mockSessionsForDate(date)
+        if sessions.isEmpty, let hardcoded = hardcodedSessions(for: date) {
+            sessions = hardcoded
         }
-        if sessions.isEmpty, let mockH = mockHoursForFallback(for: date), mockH > 0 {
-            let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart
-            let bedtime = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay) ?? prevDay
-            let wake = bedtime.addingTimeInterval(mockH * 3600)
-            sessions.append(SleepSession(startDate: bedtime, endDate: wake, isNighttime: true, childId: UUID()))
-        }
-
         if sessions.isEmpty { return nil }
         return DaySummary(id: dayStart, date: dayStart, sessions: sessions)
-    }
-
-    /// Fallback mock (single night) for other weeks when no data.
-    private func mockHoursForFallback(for date: Date) -> Double? {
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
-        if calendar.isDate(weekStart, inSameDayAs: mockWeekStart) { return nil }
-        let weekFeb22 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 22))!
-        if calendar.isDate(weekStart, inSameDayAs: weekFeb22) {
-            let weekdayIndex = calendar.component(.weekday, from: date) - 1
-            let seed = Int(weekStart.timeIntervalSince1970) ^ (weekdayIndex * 1_109_519_737)
-            return 8.0 + unitRandom(seed: seed) * 2.5
-        }
-        return nil
     }
 
     private var weeklyBarChart: some View {
@@ -220,13 +234,13 @@ struct HistoryView: View {
 
         let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
             let label = weekdays[index]
-            let totalSeconds = totalSleepSeconds(for: date)
+            let totalSeconds = isCurrentWeekDemoWeek ? totalSleepSeconds(for: date) : 0
             let hours: Double? = totalSeconds > 0 ? totalSeconds / 3600 : nil
             return DayBucket(date: date, label: label, hours: hours)
         }
 
         let availableHours = dayBuckets.compactMap { $0.hours }
-        let hasDataThisWeek = !availableHours.isEmpty
+        let hasDataThisWeek = isCurrentWeekDemoWeek && !availableHours.isEmpty
         let maxHours = max(availableHours.max() ?? 10, 1)
 
         return VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -237,7 +251,12 @@ struct HistoryView: View {
                 Spacer()
             }
 
-            if !hasDataThisWeek {
+            if !isCurrentWeekDemoWeek {
+                Text("No Data Available")
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+                    .padding(.top, Spacing.xs)
+            } else if !hasDataThisWeek {
                 Text("No history available for this week")
                     .font(.bodySmall)
                     .foregroundColor(.textSecondary)
@@ -269,7 +288,7 @@ struct HistoryView: View {
                                 .frame(maxWidth: .infinity)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    if bucket.hours != nil {
+                                    if isCurrentWeekDemoWeek || bucket.hours != nil {
                                         controller.selectDate(bucket.date)
                                     }
                                 }
