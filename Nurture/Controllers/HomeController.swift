@@ -28,6 +28,7 @@ final class HomeController: ObservableObject {
     private let aiSleepRecService = AISleepRecommendationService()
     private let mlPredictionService = MLPredictionService()
     private var cancellable: AnyCancellable?
+    private var manualStoreCancellable: AnyCancellable?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
 
@@ -56,6 +57,10 @@ final class HomeController: ObservableObject {
                 self?.objectWillChange.send()
             }
         }
+        manualStoreCancellable = ManualSleepStore.shared.objectWillChange.sink { [weak self] _ in
+            self?.syncTodaysNapsFromStore()
+        }
+        syncTodaysNapsFromStore()
 
         if useDemoMode {
             // Demo: fully mocked data for UI previews and simulator
@@ -150,9 +155,7 @@ final class HomeController: ObservableObject {
         let end = Date()
         ManualSleepStore.shared.add(startDate: start, endDate: end, isNighttime: false, childId: currentChildId)
         napStartDate = nil
-        let added = end.timeIntervalSince(start)
-        todaysNapsDuration += added
-        todaysNapCount += 1
+        syncTodaysNapsFromStore()
         refresh()
     }
 
@@ -160,9 +163,15 @@ final class HomeController: ObservableObject {
     func logNap(startDate: Date, durationSeconds: TimeInterval) {
         let endDate = startDate.addingTimeInterval(durationSeconds)
         ManualSleepStore.shared.add(startDate: startDate, endDate: endDate, isNighttime: false, childId: currentChildId)
-        todaysNapsDuration += durationSeconds
-        todaysNapCount += 1
+        syncTodaysNapsFromStore()
         refresh()
+    }
+
+    /// Sync Today's Naps from ManualSleepStore (called when store changes, e.g. add/delete).
+    private func syncTodaysNapsFromStore() {
+        let today = Calendar.current.startOfDay(for: Date())
+        todaysNapsDuration = ManualSleepStore.shared.napDuration(for: today)
+        todaysNapCount = ManualSleepStore.shared.napEntries(for: today).count
     }
 
     private func loadMockData() {

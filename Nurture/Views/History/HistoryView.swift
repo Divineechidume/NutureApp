@@ -279,7 +279,8 @@ struct HistoryView: View {
     }
 
     private func selectedDayDetail(_ day: DaySummary) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        let deletableIds = ManualSleepStore.shared.entryIds(for: day.date)
+        return VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(day.date.formatted(as: .dateLabel))
@@ -299,7 +300,9 @@ struct HistoryView: View {
             )
 
             ForEach(day.sessions) { session in
-                sessionRow(session)
+                sessionRow(session, canDelete: deletableIds.contains(session.id)) {
+                    ManualSleepStore.shared.remove(entryId: session.id)
+                }
             }
             .padding(Spacing.md)
             .background(
@@ -332,7 +335,7 @@ struct HistoryView: View {
         return result
     }
 
-    private func sessionRow(_ session: SleepSession) -> some View {
+    private func sessionRow(_ session: SleepSession, canDelete: Bool, onDelete: @escaping () -> Void) -> some View {
         let f = DateFormatter()
         f.timeStyle = .short
         let startStr = f.string(from: session.startDate)
@@ -350,6 +353,14 @@ struct HistoryView: View {
                     .foregroundColor(DesignTokens.textSecondary)
             }
             Spacer()
+            if canDelete {
+                Button(role: .destructive) { onDelete() } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 16))
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.vertical, DesignTokens.spacingXS)
     }

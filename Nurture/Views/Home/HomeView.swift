@@ -17,6 +17,7 @@ struct HomeView: View {
     @AppStorage("demoShowEmptyStates") private var demoShowEmptyStates = false
     @State private var showNapOptions = false
     @State private var showLogNapSheet = false
+    @State private var showTodayNapsDetail = false
     @State private var logNapStart = Date()
     @State private var logNapMinutes: Int = 45
 
@@ -56,18 +57,22 @@ struct HomeView: View {
                 NoDevicePairedView(onPairTapped: { /* Navigate to pairing */ })
             }
         }
-        .confirmationDialog("Nap", isPresented: $showNapOptions, titleVisibility: .visible) {
-            Button("Start Nap") {
-                controller.startNap()
-            }
-            Button("Log Nap") {
-                logNapStart = Date()
-                logNapMinutes = 45
-                showLogNapSheet = true
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Track a nap with the monitor or enter manually.")
+        .sheet(isPresented: $showNapOptions) {
+            NapOptionsModalView(
+                onStartNap: {
+                    showNapOptions = false
+                    controller.startNap()
+                },
+                onLogNap: {
+                    showNapOptions = false
+                    logNapStart = Date()
+                    logNapMinutes = 45
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        showLogNapSheet = true
+                    }
+                },
+                onDismiss: { showNapOptions = false }
+            )
         }
         .sheet(isPresented: $showLogNapSheet) {
             LogNapSheet(
@@ -79,6 +84,9 @@ struct HomeView: View {
                 },
                 onCancel: { showLogNapSheet = false }
             )
+        }
+        .sheet(isPresented: $showTodayNapsDetail) {
+            TodayNapsDetailView(onDismiss: { showTodayNapsDetail = false })
         }
     }
 
@@ -150,12 +158,17 @@ struct HomeView: View {
                 title: "Last Night",
                 value: controller.lastNightTotalString + " total sleep"
             )
-            InfoCard(
-                icon: "sun.max.fill",
-                iconColor: Color(hex: "F59E0B"),
-                title: "Today's Naps",
-                value: controller.todaysNapsString
-            )
+            Button {
+                showTodayNapsDetail = true
+            } label: {
+                InfoCard(
+                    icon: "sun.max.fill",
+                    iconColor: Color(hex: "F59E0B"),
+                    title: "Today's Naps",
+                    value: controller.todaysNapsString
+                )
+            }
+            .buttonStyle(.plain)
             if !isAsleep, let nap = controller.napPrediction {
                 NapPredictionCard(prediction: nap)
             }
@@ -529,7 +542,6 @@ struct LogNapSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { onSave() }
-                        .fontWeight(.semibold)
                         .foregroundColor(.sageGreen)
                 }
             }
@@ -542,6 +554,149 @@ struct LogNapSheet: View {
         let h = minutes / 60
         let m = minutes % 60
         return m == 0 ? "\(h) hr" : "\(h) hr \(m) min"
+    }
+}
+
+// MARK: - Nap options modal (full-screen feel, lightweight sheet)
+
+struct NapOptionsModalView: View {
+    var onStartNap: () -> Void
+    var onLogNap: () -> Void
+    var onDismiss: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: Spacing.lg) {
+                Text("Track a nap with the monitor or enter manually.")
+                    .font(.bodyMedium)
+                    .foregroundColor(.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Spacing.lg)
+
+                VStack(spacing: Spacing.sm) {
+                    Button {
+                        dismiss()
+                        onStartNap()
+                    } label: {
+                        Label("Start Nap", systemImage: "sun.max.fill")
+                            .font(.labelLarge)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Spacing.sm)
+                            .background(RoundedRectangle(cornerRadius: CornerRadius.small).fill(Color(hex: "F59E0B")))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        dismiss()
+                        onLogNap()
+                    } label: {
+                        Label("Log Nap", systemImage: "pencil")
+                            .font(.labelLarge)
+                            .foregroundColor(.textPrimary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Spacing.sm)
+                            .background(
+                                RoundedRectangle(cornerRadius: CornerRadius.small)
+                                    .fill(Color.cardBackground)
+                                    .overlay(RoundedRectangle(cornerRadius: CornerRadius.small).stroke(Color.sageGreen.opacity(0.5), lineWidth: 1))
+                                    .cardShadowSecondary()
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, Spacing.lg)
+
+                Spacer()
+            }
+            .padding(.top, Spacing.xl)
+            .background(Color.cream.ignoresSafeArea())
+            .navigationTitle("Nap")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                        onDismiss()
+                    }
+                    .foregroundColor(.sageGreen)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Today's Naps detail (list of naps for today)
+
+struct TodayNapsDetailView: View {
+    var onDismiss: () -> Void
+
+    @ObservedObject private var manualStore = ManualSleepStore.shared
+    private let calendar = Calendar.current
+
+    private var todayNaps: [ManualSleepEntry] {
+        let today = calendar.startOfDay(for: Date())
+        return manualStore.napEntries(for: today)
+    }
+
+    var body: some View {
+        NavigationView {
+            Group {
+                if todayNaps.isEmpty {
+                    VStack(spacing: Spacing.lg) {
+                        Image(systemName: "sun.max")
+                            .font(.system(size: 48))
+                            .foregroundColor(.textSecondary.opacity(0.6))
+                        Text("No naps logged today")
+                            .font(.headingSmall)
+                            .foregroundColor(.textPrimary)
+                        Text("Use Start Nap or Log Nap on the Home screen to add entries.")
+                            .font(.bodySmall)
+                            .foregroundColor(.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, Spacing.lg)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(todayNaps) { entry in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(formatTime(entry.startDate))
+                                        .font(.bodyMedium)
+                                        .foregroundColor(.textPrimary)
+                                    Text(entry.durationSeconds.durationString)
+                                        .font(.bodySmall)
+                                        .foregroundColor(.textSecondary)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, Spacing.xs)
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                }
+            }
+            .background(Color.cream)
+            .navigationTitle("Today's Naps")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        onDismiss()
+                    }
+                    .foregroundColor(.sageGreen)
+                }
+            }
+        }
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f.string(from: date)
     }
 }
 

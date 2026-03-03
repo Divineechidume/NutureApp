@@ -46,12 +46,41 @@ final class ManualSleepStore: ObservableObject {
         entries.append(entry)
     }
 
+    /// Removes an entry by id. No-op if not found (e.g. mock-only session).
+    func remove(entryId: UUID) {
+        entries.removeAll { $0.id == entryId }
+    }
+
+    /// IDs of manual entries for a given day (for delete eligibility in History).
+    func entryIds(for date: Date) -> Set<UUID> {
+        let dayStart = calendar.startOfDay(for: date)
+        return Set(entries
+            .filter { calendar.isDate($0.startDate, inSameDayAs: dayStart) }
+            .map(\.id))
+    }
+
     /// Total sleep duration (seconds) for a given calendar day (sessions attributed by start date).
     func totalDuration(for date: Date) -> TimeInterval {
         let dayStart = calendar.startOfDay(for: date)
         return entries
             .filter { calendar.isDate($0.startDate, inSameDayAs: dayStart) }
             .reduce(0) { $0 + $1.durationSeconds }
+    }
+
+    /// Nap-only duration for a day (for Today's Naps).
+    func napDuration(for date: Date) -> TimeInterval {
+        let dayStart = calendar.startOfDay(for: date)
+        return entries
+            .filter { !$0.isNighttime && calendar.isDate($0.startDate, inSameDayAs: dayStart) }
+            .reduce(0) { $0 + $1.durationSeconds }
+    }
+
+    /// Nap entries for a day, chronological order (for Today's Naps detail list).
+    func napEntries(for date: Date) -> [ManualSleepEntry] {
+        let dayStart = calendar.startOfDay(for: date)
+        return entries
+            .filter { !$0.isNighttime && calendar.isDate($0.startDate, inSameDayAs: dayStart) }
+            .sorted { $0.startDate < $1.startDate }
     }
 
     /// Sessions for a given day (for day detail panel), attributed by start date.
