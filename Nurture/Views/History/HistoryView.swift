@@ -22,11 +22,15 @@ struct HistoryView: View {
     private let weekdays = ["S", "M", "T", "W", "T", "F", "S"]
     @State private var weekOffset: Int = 0
 
-    /// Mock total sleep hours for one demo week (Sun–Sat).
-    private let mockWeekDurations: [Double] = [9.5, 8.2, 7.9, 10.0, 8.7, 9.0, 8.4]
+    /// Anchor the weekly mock history to Tue, Mar 3, 2026.
+    private var mockAnchorDate: Date {
+        calendar.date(from: DateComponents(year: 2026, month: 3, day: 3)) ?? Date()
+    }
+
+    private var maxWeekOffset: Int { 0 }
 
     private var currentWeekStart: Date {
-        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: Date()) ?? Date()
+        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: mockAnchorDate) ?? mockAnchorDate
         return calendar.dateInterval(of: .weekOfYear, for: reference)?.start ?? calendar.startOfDay(for: reference)
     }
 
@@ -42,7 +46,8 @@ struct HistoryView: View {
                         VStack(spacing: Spacing.lg) {
                             weekHeader
                             weeklyBarChart
-                            if let day = controller.selectedDate.flatMap({ controller.daySummary(for: $0) }) {
+                            if let selected = controller.selectedDate,
+                               let day = daySummaryForDisplay(for: selected) {
                                 selectedDayDetail(day)
                             }
                         }
@@ -82,7 +87,67 @@ struct HistoryView: View {
                     .foregroundColor(.sageGreen)
                     .frame(width: 44, height: 44)
             }
+            .disabled(weekOffset >= maxWeekOffset)
+            .opacity(weekOffset >= maxWeekOffset ? 0.35 : 1.0)
         }
+    }
+
+    private func mockDurationsForWeek(start: Date) -> [Double?] {
+        let weekFeb15 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 15))!
+        let weekFeb22 = calendar.date(from: DateComponents(year: 2026, month: 2, day: 22))!
+        let weekMar1 = calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
+
+        // Week of Feb 15, 2026: explicitly empty
+        if calendar.isDate(start, inSameDayAs: weekFeb15) {
+            return Array(repeating: nil, count: 7)
+        }
+
+        // Week of Feb 22, 2026: randomized realistic (deterministic) values within 7–11 hours
+        if calendar.isDate(start, inSameDayAs: weekFeb22) {
+            return (0..<7).map { idx in
+                let seed = Int(start.timeIntervalSince1970) ^ (idx * 1_109_519_737)
+                return deterministicHours(min: 7.0, max: 11.0, seed: seed)
+            }
+        }
+
+        // Current mock week (week of Mar 1, 2026): show data only through Tue, Mar 3, 2026.
+        // Do NOT include data for Wed, Mar 4 (demo day).
+        if calendar.isDate(start, inSameDayAs: weekMar1) {
+            // Sun Mar 1, Mon Mar 2, Tue Mar 3, then nil for Wed–Sat.
+            return [9.1, 8.6, 8.0, nil, nil, nil, nil]
+        }
+
+        // Other weeks: no mock history.
+        return Array(repeating: nil, count: 7)
+    }
+
+    private func deterministicHours(min: Double, max: Double, seed: Int) -> Double {
+        // Simple deterministic pseudo-random in [0,1)
+        var x = UInt64(bitPattern: Int64(seed))
+        x = x &* 6364136223846793005 &+ 1442695040888963407
+        let unit = Double(x % 10_000) / 10_000.0
+        let value = min + (max - min) * unit
+        return (value * 10).rounded() / 10
+    }
+
+    private func daySummaryForDisplay(for date: Date) -> DaySummary? {
+        if let real = controller.daySummary(for: date) { return real }
+        // Mock-only weekly view: synthesize a DaySummary so the existing detail section stays intact.
+        guard let hours = mockHours(for: date), hours > 0 else { return nil }
+        let dayStart = calendar.startOfDay(for: date)
+        let prevDay = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart
+        let bedtime = calendar.date(bySettingHour: 19, minute: 45, second: 0, of: prevDay) ?? prevDay
+        let wake = bedtime.addingTimeInterval(hours * 3600)
+        let session = SleepSession(startDate: bedtime, endDate: wake, isNighttime: true, childId: UUID())
+        return DaySummary(id: dayStart, date: dayStart, sessions: [session])
+    }
+
+    private func mockHours(for date: Date) -> Double? {
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
+        let weekdayIndex = calendar.component(.weekday, from: date) - 1 // 0=Sun ... 6=Sat
+        let durations = mockDurationsForWeek(start: weekStart)
+        guard weekdayIndex >= 0, weekdayIndex < durations.count else { return nil }
+        return durations[weekdayIndex]
     }
 
     private var weeklyBarChart: some View {
@@ -99,14 +164,7 @@ struct HistoryView: View {
         let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
             let label = weekdays[index]
 
-            let hours: Double?
-            if useDemoMode && weekOffset == 0 && index < mockWeekDurations.count {
-                hours = mockWeekDurations[index]
-            } else if let summary = controller.daySummary(for: date) {
-                hours = summary.totalDuration / 3600
-            } else {
-                hours = nil
-            }
+            let hours = mockHours(for: date)
 
             return DayBucket(date: date, label: label, hours: hours)
         }
@@ -124,7 +182,8 @@ struct HistoryView: View {
             }
 
             if !hasDataThisWeek {
-                Text("No history collected for this week")
+                let emptyWeek = calendar.isDate(currentWeekStart, inSameDayAs: calendar.date(from: DateComponents(year: 2026, month: 2, day: 15))!)
+                Text(emptyWeek ? "No history available" : "No history collected for this week")
                     .font(.bodySmall)
                     .foregroundColor(.textSecondary)
                     .padding(.top, Spacing.xs)
@@ -152,7 +211,7 @@ struct HistoryView: View {
                                     .frame(height: barHeight)
                                     .frame(maxWidth: .infinity)
                                     .onTapGesture {
-                                        if let _ = controller.daySummary(for: bucket.date) {
+                                        if bucket.hours != nil {
                                             controller.selectDate(bucket.date)
                                         }
                                     }
