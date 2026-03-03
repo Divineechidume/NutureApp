@@ -68,12 +68,10 @@ struct HomeView: View {
                 value: controller.todaysNapsString
             )
             if !isAsleep, let nap = controller.napPrediction {
-                InfoCard(
-                    icon: "lightbulb.fill",
-                    iconColor: Color(hex: "EAB308"),
-                    title: "Next Nap",
-                    value: nap.message
-                )
+                NapPredictionCard(prediction: nap)
+            }
+            if let rec = controller.sleepRecommendation {
+                SleepRecommendationCard(recommendation: rec)
             }
         }
         .padding(.horizontal, Spacing.md)
@@ -227,6 +225,141 @@ struct InfoCard: View {
     }
 }
 
+// MARK: - Nap Prediction Card (expandable reasoning)
+
+struct NapPredictionCard: View {
+    let prediction: NapPrediction
+    @State private var showDetails = false
+
+    private let iconColor = Color(hex: "EAB308")
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "lightbulb.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(iconColor)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(iconColor.opacity(0.15)))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Next Nap")
+                        .font(.labelSmall)
+                        .foregroundColor(.textSecondary)
+                    Text(prediction.message)
+                        .font(.bodyMedium)
+                        .foregroundColor(.textPrimary)
+                }
+                Spacer()
+                Image(systemName: showDetails ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.textSecondary)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showDetails.toggle()
+                }
+            }
+
+            // Transparency Layer: Show reasoning for AI predictions
+            if showDetails && !prediction.reasoning.isEmpty {
+                Text(prediction.reasoning)
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+                    .padding(.top, Spacing.xs)
+            }
+        }
+        .padding(Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.small)
+                .fill(Color.cardBackground)
+                .cardShadowSecondary()
+        )
+    }
+}
+
+// MARK: - AI Sleep Recommendation Card
+
+struct SleepRecommendationCard: View {
+    let recommendation: SleepRecommendation
+    @State private var showDetails = false
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
+
+    private var iconName: String {
+        switch recommendation.category {
+        case .bedtime: return "moon.stars.fill"
+        case .routine: return "sparkles"
+        case .rest: return "heart.fill"
+        case .pattern: return "chart.line.uptrend.xyaxis"
+        }
+    }
+
+    private var iconColor: Color {
+        switch recommendation.category {
+        case .bedtime: return Color(hex: "6366F1")
+        case .routine: return Color(hex: "8B5CF6")
+        case .rest: return Color(hex: "EC4899")
+        case .pattern: return Color.sageGreen
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: iconName)
+                    .font(.system(size: 18))
+                    .foregroundColor(iconColor)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(iconColor.opacity(0.15)))
+                Text(recommendation.title)
+                    .font(.labelSmall)
+                    .foregroundColor(.textSecondary)
+                Spacer()
+                Image(systemName: showDetails ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.textSecondary)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showDetails.toggle()
+                }
+            }
+            Text(recommendation.message)
+                .font(.bodyMedium)
+                .foregroundColor(.textPrimary)
+            if let bedtime = recommendation.suggestedBedtime {
+                Text("Suggested: \(Self.timeFormatter.string(from: bedtime))")
+                    .font(.labelSmall)
+                    .foregroundColor(iconColor)
+            }
+
+            // Transparency Layer: Show reasoning for AI predictions
+            if showDetails && !recommendation.reasoning.isEmpty {
+                Text(recommendation.reasoning)
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+                    .padding(.top, Spacing.xs)
+            }
+        }
+        .padding(Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.small)
+                .fill(Color.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.small)
+                        .stroke(iconColor.opacity(0.3), lineWidth: 1)
+                )
+                .cardShadowSecondary()
+        )
+    }
+}
+
 // MARK: - No Device Paired Empty State
 
 struct NoDevicePairedView: View {
@@ -267,3 +400,4 @@ struct NoDevicePairedView: View {
         .background(Color.cream)
     }
 }
+

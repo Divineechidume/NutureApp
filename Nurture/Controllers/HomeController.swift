@@ -13,15 +13,18 @@ import Combine
 final class HomeController: ObservableObject {
     // MARK: - Published State
 
-    @Published var isAsleep: Bool = true
+    @Published var isAsleep: Bool = false
     @Published var sleepStartDate: Date?
     @Published var lastNightTotalDuration: TimeInterval = 0
     @Published var todaysNapsDuration: TimeInterval = 0
     @Published var todaysNapCount: Int = 0
     @Published var napPrediction: NapPrediction?
+    @Published var sleepRecommendation: SleepRecommendation?
     @Published var child: Child?
 
     private let childrenStore: ChildrenStore?
+    private let aiSleepRecService = AISleepRecommendationService()
+    private let mlPredictionService = MLPredictionService()
     private var cancellable: AnyCancellable?
     @Published var lastUpdated: Date = Date()
     @Published var demoShowAwake: Bool = false
@@ -51,8 +54,17 @@ final class HomeController: ObservableObject {
                 self?.objectWillChange.send()
             }
         }
+
         if useDemoMode {
+            // Demo: fully mocked data for UI previews and simulator
             loadMockData()
+            // TEST MODE: Keep child awake for nap prediction visibility
+            seedMockPredictionIfNeeded()
+        } else {
+            // Non‑demo: until Bluetooth / sleep detection are wired,
+            // seed lightweight mock data so Home still shows nap prediction
+            // and a sleep recommendation based only on simple durations.
+            seedMockPredictionIfNeeded()
         }
     }
 
@@ -89,7 +101,12 @@ final class HomeController: ObservableObject {
         }
         if useDemoMode {
             loadMockData()
+        } else {
+            // Until real data is integrated, refresh keeps the mock-backed
+            // prediction and recommendation up to date.
         }
+        // TEST MODE: Keep child awake for nap prediction visibility
+        seedMockPredictionIfNeeded()
         // Integration point: Pull latest from BluetoothService / cache when not in demo mode.
         // TODO: Pull latest from BluetoothService / cache. PRD Section 2 - pull-to-refresh.
     }
@@ -108,7 +125,6 @@ final class HomeController: ObservableObject {
             let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
             child = Child(name: mockChildName, birthdate: birthdate, ageRange: AgeRange.from(birthdate: birthdate))
         }
-        isAsleep = !demoShowAwake
         var components = DateComponents()
         components.hour = -2
         components.minute = -15
@@ -116,10 +132,61 @@ final class HomeController: ObservableObject {
         lastNightTotalDuration = 9 * 3600 + 15 * 60 // 9h 15m
         todaysNapsDuration = 1 * 3600 + 30 * 60
         todaysNapCount = 1
-        napPrediction = NapPrediction(
-            suggestedTime: Calendar.current.date(byAdding: .hour, value: 2, to: Date()) ?? Date(),
-            confidence: .high,
-            message: "Likely ready for a nap around 2:00 PM"
+        if let wakeTime = sleepStartDate {
+            napPrediction = mlPredictionService.predictNextNap(
+                wakeTime: wakeTime,
+                ageRange: child?.ageRange ?? .sixToTwelveMonths
+            )
+        }
+        sleepRecommendation = aiSleepRecService.recommendation(
+            for: child,
+            lastNightTotalSeconds: lastNightTotalDuration,
+            todaysNapsSeconds: todaysNapsDuration,
+            isCurrentlyAsleep: isAsleep
+        )
+    }
+
+    /// Seeds minimal mock data for nap prediction and sleep recommendation
+    /// when the real Bluetooth / sleep detection pipeline is not yet wired.
+    /// Uses only simple duration-style inputs so the Home screen always shows
+    /// a useful "next nap" and "tonight's suggestion" card.
+    private func seedMockPredictionIfNeeded() {
+        // TEST MODE: Keep child awake for nap prediction visibility
+        isAsleep = false
+
+        // Ensure we have a child profile to derive age range from.
+        if child == nil {
+            if let store = childrenStore {
+                child = store.selectedChild
+            } else if let savedChild = ChildProfileStore.load() {
+                child = savedChild
+            } else {
+                let birthdate = Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date()
+                child = Child(name: mockChildName, birthdate: birthdate, ageRange: AgeRange.from(birthdate: birthdate))
+            }
+        }
+
+        // If we don't yet have any real sleep data, populate lightweight mock
+        // durations so the AI services have something to work from.
+        if lastNightTotalDuration == 0 && todaysNapsDuration == 0 {
+            // Slightly more generic defaults than demo-specific values.
+            lastNightTotalDuration = 8 * 3600 + 30 * 60  // 8h 30m
+            todaysNapsDuration = 1 * 3600                // 1h across naps
+            todaysNapCount = 2
+        }
+
+        // Use a simple "awake for about 2 hours" assumption for next‑nap timing.
+        let assumedLastWakeTime = Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date()
+        napPrediction = mlPredictionService.predictNextNap(
+            wakeTime: assumedLastWakeTime,
+            ageRange: child?.ageRange ?? .sixToTwelveMonths
+        )
+
+        sleepRecommendation = aiSleepRecService.recommendation(
+            for: child,
+            lastNightTotalSeconds: lastNightTotalDuration,
+            todaysNapsSeconds: todaysNapsDuration,
+            isCurrentlyAsleep: isAsleep
         )
     }
 }
