@@ -63,13 +63,14 @@ struct RolloverAlertView: View {
         VStack(spacing: Spacing.lg) {
             Spacer()
 
-            VStack(spacing: Spacing.xs) {
-                Text("\(childName) may have rolled over")
-                    .font(.displayMedium)
+            VStack(spacing: Spacing.md) {
+                Text("\(childName) may have\nrolled over")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(.textPrimary)
+                    .multilineTextAlignment(.center)
 
                 Text("Your baby, \(childName), rolled onto their tummy at \(timeString). Many babies begin rolling as they grow. If placed on their back to sleep, you may want to gently reposition them. 💗")
-                    .font(.bodyMedium)
+                    .font(.system(size: 20, weight: .regular))
                     .foregroundColor(.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Spacing.xl)
@@ -77,7 +78,7 @@ struct RolloverAlertView: View {
 
             Button(action: onDismiss) {
                 Text("I've Checked")
-                    .font(.labelLarge)
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Spacing.sm)
@@ -89,7 +90,7 @@ struct RolloverAlertView: View {
             .padding(.horizontal, Spacing.lg)
 
             Text(relativeTimeString)
-                .font(.bodySmall)
+                .font(.system(size: 18, weight: .regular))
                 .foregroundColor(.textSecondary)
 
             Spacer()
