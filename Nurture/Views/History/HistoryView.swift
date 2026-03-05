@@ -23,28 +23,37 @@ struct HistoryView: View {
     private let weekdays = ["S", "M", "T", "W", "T", "F", "S"]
     @State private var weekOffset: Int = 0
 
-    /// Demo week: Mar 1, 2026. Sunday = Mar 1, Monday = Mar 2, Today = Mar 3 (demo), Tomorrow = Mar 4.
-    private var demoWeekStart: Date {
-        calendar.date(from: DateComponents(year: 2026, month: 3, day: 1))!
-    }
-
-    private var demoSunday: Date { calendar.startOfDay(for: demoWeekStart) }
-    private var demoMonday: Date { calendar.date(byAdding: .day, value: 1, to: demoSunday)! }
-    private var demoToday: Date { calendar.date(byAdding: .day, value: 2, to: demoSunday)! }
-    private var demoTomorrow: Date { calendar.date(byAdding: .day, value: 3, to: demoSunday)! }
-
-    /// Real calendar today (for dynamic total when viewing a week that contains today).
+    /// Real calendar today.
     private var realTodayStart: Date { calendar.startOfDay(for: Date()) }
+
+    /// Fixed mock sleep hours per weekday. weekday: 1=Sun, 2=Mon, … 7=Sat.
+    private let mockHoursByWeekday: [Int: Double] = [
+        1: 11.0,   // Sunday
+        2: 11.5,   // Monday
+        3: 10.0,   // Tuesday
+        4: 12.0,   // Wednesday
+        5: 11.0,   // Thursday
+        6: 10.0,   // Friday
+        7: 11.5    // Saturday
+    ]
+
+    private func mockHoursForDate(_ date: Date) -> Double {
+        let weekday = calendar.component(.weekday, from: date)
+        return mockHoursByWeekday[weekday] ?? 10.0
+    }
 
     private var maxWeekOffset: Int { 0 }
 
+    /// Start of the current week being displayed (Sunday-aligned, relative to today + weekOffset).
     private var currentWeekStart: Date {
-        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: demoWeekStart) ?? demoWeekStart
+        let reference = calendar.date(byAdding: .day, value: weekOffset * 7, to: realTodayStart) ?? realTodayStart
         return calendar.dateInterval(of: .weekOfYear, for: reference)?.start ?? calendar.startOfDay(for: reference)
     }
 
+    /// True when the displayed week contains today.
     private var isCurrentWeekDemoWeek: Bool {
-        calendar.isDate(currentWeekStart, inSameDayAs: demoWeekStart)
+        guard let weekEnd = calendar.date(byAdding: .day, value: 6, to: currentWeekStart) else { return false }
+        return realTodayStart >= currentWeekStart && realTodayStart <= weekEnd
     }
 
     var body: some View {
@@ -162,17 +171,18 @@ struct HistoryView: View {
         }
     }
 
-    /// Single source of truth: total sleep for a date in seconds. Bar chart and label use this only. No cached values.
-    /// Sunday (Mar 1) → 11h; Monday (Mar 2) → 11.5h; Today → base 9.75h + logged today; else → 0.
+    /// Single source of truth: total sleep for a date in seconds.
+    /// Past days use per-weekday mock hours; today shows only manually logged sessions; future days = 0.
     private func totalSleepSeconds(for date: Date) -> TimeInterval {
         let dayStart = calendar.startOfDay(for: date)
-        if calendar.isDate(dayStart, inSameDayAs: demoSunday) { return 11 * 3600 }
-        if calendar.isDate(dayStart, inSameDayAs: demoMonday) { return 11.5 * 3600 }
+        // Future days: no data
+        guard dayStart <= realTodayStart else { return 0 }
+        // Today: only manually logged sessions (no weekday base)
         if calendar.isDate(dayStart, inSameDayAs: realTodayStart) {
-            let baseToday: TimeInterval = 9.75 * 3600
-            return baseToday + manualStore.totalSleepSeconds(for: date)
+            return manualStore.totalSleepSeconds(for: date)
         }
-        return 0
+        // Past days: deterministic per-date mock hours in [9.5, 12.0]
+        return mockHoursForDate(dayStart) * 3600
     }
 
     /// True if the date has any displayable sleep (for showing day detail vs "No Data").
@@ -180,10 +190,10 @@ struct HistoryView: View {
         totalSleepSeconds(for: date) > 0
     }
 
-    /// Whether the date is read-only (Sunday or Monday). Today and others are not locked.
+    /// Past days (before today) are locked/read-only; today is editable.
     private func isLockedDay(_ date: Date) -> Bool {
         let dayStart = calendar.startOfDay(for: date)
-        return calendar.isDate(dayStart, inSameDayAs: demoSunday) || calendar.isDate(dayStart, inSameDayAs: demoMonday)
+        return dayStart < realTodayStart
     }
 
     private var weeklyBarChart: some View {
@@ -200,13 +210,13 @@ struct HistoryView: View {
 
         let dayBuckets: [DayBucket] = dates.enumerated().map { index, date in
             let label = weekdays[index]
-            let totalSeconds = isCurrentWeekDemoWeek ? totalSleepSeconds(for: date) : 0
+            let totalSeconds = totalSleepSeconds(for: date)
             let hours = totalSeconds / 3600
             return DayBucket(date: date, label: label, hours: hours)
         }
 
         let allHours = dayBuckets.map(\.hours)
-        let hasDataThisWeek = isCurrentWeekDemoWeek && allHours.contains { $0 > 0 }
+        let hasDataThisWeek = allHours.contains { $0 > 0 }
         let maxHours = max(allHours.max() ?? 10, 1)
 
         return VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -217,12 +227,7 @@ struct HistoryView: View {
                 Spacer()
             }
 
-            if !isCurrentWeekDemoWeek {
-                Text("No Data Available")
-                    .font(.bodySmall)
-                    .foregroundColor(.textSecondary)
-                    .padding(.top, Spacing.xs)
-            } else if !hasDataThisWeek {
+            if !hasDataThisWeek {
                 Text("No history available for this week")
                     .font(.bodySmall)
                     .foregroundColor(.textSecondary)
@@ -230,47 +235,42 @@ struct HistoryView: View {
             }
 
             // Bar height = totalSleepSeconds(for: date) / 3600 (single source of truth)
-            GeometryReader { proxy in
-                HStack(alignment: .bottom, spacing: Spacing.xs) {
-                    ForEach(0..<dayBuckets.count, id: \.self) { index in
-                        let bucket = dayBuckets[index]
-                        let value = bucket.hours
-                        let heightRatio = maxHours > 0 ? CGFloat(value) / CGFloat(maxHours) : 0
-                        let barHeight = max(4, proxy.size.height * heightRatio)
+            HStack(alignment: .bottom, spacing: Spacing.xs) {
+                ForEach(0..<dayBuckets.count, id: \.self) { index in
+                    let bucket = dayBuckets[index]
+                    let value = bucket.hours
 
-                        VStack(spacing: 4) {
-                            if value > 0 {
-                                Text(String(format: "%.1fh", value))
-                                    .font(.labelSmall)
-                                    .foregroundColor(.textSecondary)
-                            } else {
-                                Text("0h")
-                                    .font(.labelSmall)
-                                    .foregroundColor(.textSecondary)
-                            }
-
-                            RoundedRectangle(cornerRadius: CornerRadius.small)
-                                .fill(Color.sageGreen.opacity(value > 0 ? 0.9 : 0.2))
-                                .frame(height: barHeight)
-                                .frame(maxWidth: .infinity)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    if isCurrentWeekDemoWeek {
-                                        controller.selectDate(bucket.date)
-                                    }
-                                }
-
-                            Text(bucket.label)
+                    VStack(spacing: 4) {
+                        if value > 0 {
+                            Text(String(format: "%.1fh", value))
+                                .font(.labelSmall)
+                                .foregroundColor(.textSecondary)
+                        } else {
+                            Text("0h")
                                 .font(.labelSmall)
                                 .foregroundColor(.textSecondary)
                         }
-                        .frame(maxWidth: .infinity)
+
+                        RoundedRectangle(cornerRadius: CornerRadius.small)
+                            .fill(Color.sageGreen.opacity(value > 0 ? 0.9 : 0.2))
+                            .frame(height: max(4, CGFloat(value / (dayBuckets.map(\.hours).max() ?? 1)) * 100))
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                controller.selectDate(bucket.date)
+                            }
+
+                        Text(bucket.label)
+                            .font(.labelSmall)
+                            .foregroundColor(.textSecondary)
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: 140)
         }
-        .padding(Spacing.md)
+        .padding(.horizontal, Spacing.md)
+        .padding(.top, Spacing.md)
+        .padding(.bottom, Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.medium)
                 .fill(Color.white)
@@ -278,7 +278,7 @@ struct HistoryView: View {
         )
     }
 
-    /// Day detail: locked breakdown for Sunday/Monday; base + logged sessions for Today. Uses totalSleepSeconds only.
+    /// Day detail: locked breakdown for past days; base + logged sessions for Today.
     @ViewBuilder
     private func dayDetailContent(for date: Date) -> some View {
         let dayStart = calendar.startOfDay(for: date)
@@ -303,20 +303,24 @@ struct HistoryView: View {
                     .cardShadowSecondary()
             )
 
-            if calendar.isDate(dayStart, inSameDayAs: demoSunday) {
-                lockedDaySessionsCard(rows: [
-                    (label: "Night sleep", duration: 10 * 3600),
-                    (label: "Nap", duration: 1 * 3600),
-                ])
-            } else if calendar.isDate(dayStart, inSameDayAs: demoMonday) {
-                lockedDaySessionsCard(rows: [
-                    (label: "Night sleep", duration: 9 * 3600),
-                    (label: "Nap", duration: (2 * 3600) + (30 * 60)),
-                ])
-            } else if calendar.isDate(dayStart, inSameDayAs: realTodayStart) {
+            if calendar.isDate(dayStart, inSameDayAs: realTodayStart) {
                 todayDetailSessionsCard(for: date)
+            } else if isLockedDay(date) {
+                lockedDaySessionsCard(rows: mockSessionRows(for: date))
             }
         }
+    }
+
+    /// Generates mock night sleep + nap rows for a given past date based on total mock hours.
+    /// Night sleep = total - 1h nap (min 0). If total ≤ 1h, all shown as night sleep.
+    private func mockSessionRows(for date: Date) -> [(label: String, duration: TimeInterval)] {
+        let totalSeconds = mockHoursForDate(date) * 3600
+        let napSeconds: TimeInterval = totalSeconds > 3600 ? 3600 : 0
+        let nightSeconds = totalSeconds - napSeconds
+        var rows: [(label: String, duration: TimeInterval)] = []
+        if nightSeconds > 0 { rows.append((label: "Night sleep", duration: nightSeconds)) }
+        if napSeconds > 0 { rows.append((label: "Nap", duration: napSeconds)) }
+        return rows
     }
 
     /// Read-only card for Sunday/Monday. No edit or delete.
@@ -346,16 +350,12 @@ struct HistoryView: View {
         )
     }
 
-    /// Today: base rows (9h 15m night, 30m nap) + any sessions from ManualSleepStore (deletable).
+    /// Today: only manually logged sessions from ManualSleepStore (deletable). No mock base rows.
     private func todayDetailSessionsCard(for date: Date) -> some View {
-        let baseNight: TimeInterval = 9 * 3600 + 15 * 60
-        let baseNap: TimeInterval = 30 * 60
         let loggedSessions = manualStore.sessions(for: date)
         let deletableIds = manualStore.entryIds(for: date)
 
         return VStack(alignment: .leading, spacing: 0) {
-            lockedRow(label: "Night sleep", duration: baseNight)
-            lockedRow(label: "Nap", duration: baseNap)
             ForEach(loggedSessions) { session in
                 sessionRow(session, canDelete: deletableIds.contains(session.id)) {
                     manualStore.remove(entryId: session.id)

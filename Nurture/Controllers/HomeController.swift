@@ -218,13 +218,32 @@ final class HomeController: ObservableObject {
     }
 
     /// Sync Today's Naps from ManualSleepStore (called when store changes, e.g. add/delete).
+    /// Falls back to 187 minutes across 2 naps when no manual naps are logged today.
     private func syncTodaysNapsFromStore() {
         let today = Calendar.current.startOfDay(for: Date())
-        todaysNapsDuration = ManualSleepStore.shared.napDuration(for: today)
-        todaysNapCount = ManualSleepStore.shared.napEntries(for: today).count
+        let manualEntries = ManualSleepStore.shared.napEntries(for: today)
+        if manualEntries.isEmpty {
+            todaysNapsDuration = 187 * 60  // 187 min fallback
+            todaysNapCount = 2
+        } else {
+            todaysNapsDuration = ManualSleepStore.shared.napDuration(for: today)
+            todaysNapCount = manualEntries.count
+        }
     }
 
     /// Start a 60s timer when awake so "Awake for Xh Ym" updates every minute from lastSleepEndTime.
+    /// Weekday → mock night sleep hours. 1=Sun … 7=Sat. Matches HistoryView.
+    private let mockHoursByWeekday: [Int: Double] = [
+        1: 11.0, 2: 11.5, 3: 10.0, 4: 12.0, 5: 11.0, 6: 10.0, 7: 11.5
+    ]
+
+    /// Last night's mock duration derived from yesterday's weekday.
+    private var lastNightMockDuration: TimeInterval {
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+        let weekday = Calendar.current.component(.weekday, from: yesterday)
+        return (mockHoursByWeekday[weekday] ?? 10.0) * 3600
+    }
+
     private func startAwakeLiveTimerIfNeeded() {
         awakeLiveTimer?.invalidate()
         awakeLiveTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -246,9 +265,9 @@ final class HomeController: ObservableObject {
         components.hour = -2
         components.minute = -15
         sleepStartDate = Calendar.current.date(byAdding: components, to: Date())
-        lastNightTotalDuration = 9 * 3600 + 15 * 60 // 9h 15m
-        todaysNapsDuration = 1 * 3600 + 30 * 60
-        todaysNapCount = 1
+        lastNightTotalDuration = lastNightMockDuration
+        todaysNapsDuration = 187 * 60  // 187 min in 2 naps
+        todaysNapCount = 2
         sleepRecommendation = aiSleepRecService.recommendation(
             for: child,
             lastNightTotalSeconds: lastNightTotalDuration,
@@ -282,9 +301,8 @@ final class HomeController: ObservableObject {
         // If we don't yet have any real sleep data, populate lightweight mock
         // durations so the AI services have something to work from.
         if lastNightTotalDuration == 0 && todaysNapsDuration == 0 {
-            // Slightly more generic defaults than demo-specific values.
-            lastNightTotalDuration = 8 * 3600 + 30 * 60  // 8h 30m
-            todaysNapsDuration = 1 * 3600                // 1h across naps
+            lastNightTotalDuration = lastNightMockDuration
+            todaysNapsDuration = 187 * 60  // 187 min in 2 naps
             todaysNapCount = 2
         }
 

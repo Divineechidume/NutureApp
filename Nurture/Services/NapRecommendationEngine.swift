@@ -27,7 +27,7 @@ final class NapRecommendationEngine {
     var wakeWindowSeconds: TimeInterval = 2 * 3600
 
     /// Hour (0–23) after which we show "Bedtime approaching" instead of nap recommendation. Default 20 (8 PM).
-    var bedtimeHour: Int = 20
+    var bedtimeHour: Int = 16
 
     private let calendar = Calendar.current
 
