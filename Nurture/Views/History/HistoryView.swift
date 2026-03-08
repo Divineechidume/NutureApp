@@ -27,19 +27,20 @@ struct HistoryView: View {
     private var realTodayStart: Date { calendar.startOfDay(for: Date()) }
 
     /// Fixed mock sleep hours per weekday. weekday: 1=Sun, 2=Mon, … 7=Sat.
+    /// Per-weekday mock total sleep hours for an 8-month-old (typical range: 12–15h/day).
     private let mockHoursByWeekday: [Int: Double] = [
-        1: 11.0,   // Sunday
-        2: 11.5,   // Monday
-        3: 10.0,   // Tuesday
-        4: 12.0,   // Wednesday
-        5: 11.0,   // Thursday
-        6: 10.0,   // Friday
-        7: 11.5    // Saturday
+        1: 13.5,   // Sunday
+        2: 14.0,   // Monday
+        3: 12.5,   // Tuesday
+        4: 14.5,   // Wednesday
+        5: 13.0,   // Thursday
+        6: 12.5,   // Friday
+        7: 13.5    // Saturday
     ]
 
     private func mockHoursForDate(_ date: Date) -> Double {
         let weekday = calendar.component(.weekday, from: date)
-        return mockHoursByWeekday[weekday] ?? 10.0
+        return mockHoursByWeekday[weekday] ?? 13.0
     }
 
     private var maxWeekOffset: Int { 0 }
@@ -177,9 +178,10 @@ struct HistoryView: View {
         let dayStart = calendar.startOfDay(for: date)
         // Future days: no data
         guard dayStart <= realTodayStart else { return 0 }
-        // Today: only manually logged sessions (no weekday base)
+        // Today: prefer manual sessions; fall back to mock if none logged
         if calendar.isDate(dayStart, inSameDayAs: realTodayStart) {
-            return manualStore.totalSleepSeconds(for: date)
+            let manual = manualStore.totalSleepSeconds(for: date)
+            return manual > 0 ? manual : mockHoursForDate(dayStart) * 3600
         }
         // Past days: deterministic per-date mock hours in [9.5, 12.0]
         return mockHoursForDate(dayStart) * 3600
@@ -217,7 +219,6 @@ struct HistoryView: View {
 
         let allHours = dayBuckets.map(\.hours)
         let hasDataThisWeek = allHours.contains { $0 > 0 }
-        let maxHours = max(allHours.max() ?? 10, 1)
 
         return VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {

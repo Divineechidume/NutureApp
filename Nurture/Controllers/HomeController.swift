@@ -234,10 +234,10 @@ final class HomeController: ObservableObject {
     /// Start a 60s timer when awake so "Awake for Xh Ym" updates every minute from lastSleepEndTime.
     /// Weekday → mock night sleep hours. 1=Sun … 7=Sat. Matches HistoryView.
     private let mockHoursByWeekday: [Int: Double] = [
-        1: 11.0, 2: 11.5, 3: 10.0, 4: 12.0, 5: 11.0, 6: 10.0, 7: 11.5
+        1: 13.5, 2: 14.0, 3: 12.5, 4: 14.5, 5: 13.0, 6: 12.5, 7: 13.5
     ]
 
-    /// Last night's mock duration derived from yesterday's weekday.
+    /// Last night's mock duration: total mock hours minus the 1h daytime nap portion.
     private var lastNightMockDuration: TimeInterval {
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
         let weekday = Calendar.current.component(.weekday, from: yesterday)
