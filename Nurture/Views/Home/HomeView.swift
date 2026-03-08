@@ -56,15 +56,12 @@ struct HomeView: View {
         return controller.sleepStartTimeString
     }
 
-    /// Today's Naps card text: uses real manual entries when available, falls back to controller mock (187 min / 2 naps).
+    /// Today's Naps card text: live from ManualSleepStore (seeded with 2 mock naps on first launch).
     private var todaysNapsCardText: String {
         let today = Calendar.current.startOfDay(for: Date())
-        let entries = manualStore.napEntries(for: today)
-        if entries.isEmpty {
-            return controller.todaysNapsString
-        }
+        let count = manualStore.napEntries(for: today).count
+        guard count > 0 else { return "No naps logged" }
         let total = manualStore.napDuration(for: today)
-        let count = entries.count
         return "\(total.durationString) across \(count) nap\(count == 1 ? "" : "s")"
     }
 

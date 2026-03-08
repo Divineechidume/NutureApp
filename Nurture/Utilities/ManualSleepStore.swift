@@ -39,7 +39,28 @@ final class ManualSleepStore: ObservableObject {
 
     private let calendar = Calendar.current
 
-    private init() {}
+    private init() {
+        seedMockNapsIfNeeded()
+    }
+
+    /// Seeds 2 realistic mock nap entries for today if no nap entries exist yet.
+    /// Uses a placeholder childId so real children don't need to be loaded at init time.
+    private func seedMockNapsIfNeeded() {
+        let today = calendar.startOfDay(for: Date())
+        let existingNaps = entries.filter { !$0.isNighttime && calendar.isDate($0.startDate, inSameDayAs: today) }
+        guard existingNaps.isEmpty else { return }
+
+        let mockChildId = UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
+
+        func todayAt(hour: Int, minute: Int) -> Date {
+            calendar.date(bySettingHour: hour, minute: minute, second: 0, of: today) ?? today
+        }
+
+        entries.append(contentsOf: [
+            ManualSleepEntry(startDate: todayAt(hour: 9, minute: 45), endDate: todayAt(hour: 10, minute: 30), isNighttime: false, childId: mockChildId),
+            ManualSleepEntry(startDate: todayAt(hour: 13, minute: 30), endDate: todayAt(hour: 14, minute: 57), isNighttime: false, childId: mockChildId),
+        ])
+    }
 
     func add(startDate: Date, endDate: Date, isNighttime: Bool, childId: UUID) {
         let entry = ManualSleepEntry(startDate: startDate, endDate: endDate, isNighttime: isNighttime, childId: childId)

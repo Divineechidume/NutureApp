@@ -34,6 +34,7 @@ final class HistoryController: ObservableObject {
 
     init(childrenStore: ChildrenStore? = nil) {
         self.childrenStore = childrenStore
+        self.selectedDate = calendar.startOfDay(for: Date())
         if useDemoMode {
             loadMockHistory()
         }
@@ -82,10 +83,11 @@ final class HistoryController: ObservableObject {
         for dayOffset in 0..<14 {
             guard let dayStart = cal.date(byAdding: .day, value: -dayOffset, to: Date()),
                   let prevDay = cal.date(byAdding: .day, value: -1, to: dayStart) else { continue }
-            let nightStart = cal.date(bySettingHour: 19, minute: 15, second: 0, of: prevDay)!
-            let nightEnd = cal.date(bySettingHour: 6, minute: 30, second: 0, of: dayStart)!
-            let napStart = cal.date(bySettingHour: 9, minute: 45, second: 0, of: dayStart)!
-            let napEnd = cal.date(bySettingHour: 10, minute: 15, second: 0, of: dayStart)!
+            // Night sleep: 7:30 PM – 6:00 AM = 10h 30m
+            let nightStart = cal.date(bySettingHour: 19, minute: 30, second: 0, of: prevDay)!
+            let nightEnd   = cal.date(bySettingHour: 6,  minute: 0,  second: 0, of: dayStart)!
+            let napStart   = cal.date(bySettingHour: 9,  minute: 45, second: 0, of: dayStart)!
+            let napEnd     = cal.date(bySettingHour: 10, minute: 45, second: 0, of: dayStart)!
             let sessions: [SleepSession] = [
                 SleepSession(startDate: nightStart, endDate: nightEnd, isNighttime: true, childId: childId),
                 SleepSession(startDate: napStart, endDate: napEnd, isNighttime: false, childId: childId)
