@@ -78,6 +78,7 @@ struct HistoryView: View {
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .navigationViewStyle(.stack)
     }
 
     private var weekHeader: some View {
