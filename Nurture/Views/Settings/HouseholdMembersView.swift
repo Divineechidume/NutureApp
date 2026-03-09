@@ -52,7 +52,7 @@ private struct MemberRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.name)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.labelLarge)
                     .foregroundColor(DesignTokens.textPrimary)
                 Text(subtitle)
                     .font(DesignTokens.captionFont())
