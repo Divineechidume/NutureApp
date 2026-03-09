@@ -45,7 +45,7 @@ struct HomeView: View {
             return "Napping for: \(controller.napDurationString)"
         }
         if controller.isAsleep {
-            return "Sleeping for \(controller.durationString)"
+            return "Sleeping for: \(controller.durationString)"
         }
         return "Awake for \(controller.durationString)"
     }
