@@ -5,6 +5,7 @@
 //  Full-screen rollover alert. PRD Section 4: "Check on [Child's Name]", peach/coral, "I've Checked".
 //
 
+import AVFoundation
 import SwiftUI
 
 /// Holds the active rollover alert to show app-wide. Set when rollover is received (BLE or demo trigger); clear on dismiss.
@@ -47,6 +48,32 @@ final class RolloverAlertState: ObservableObject {
     }
 }
 
+private final class RolloverAlarmPlayer {
+    static let shared = RolloverAlarmPlayer()
+
+    private var player: AVAudioPlayer?
+
+    func startLooping() {
+        guard player?.isPlaying != true else { return }
+        guard let url = Bundle.main.url(forResource: "rollover_alert", withExtension: "caf") else { return }
+
+        do {
+            let alarmPlayer = try AVAudioPlayer(contentsOf: url)
+            alarmPlayer.numberOfLoops = -1
+            alarmPlayer.prepareToPlay()
+            alarmPlayer.play()
+            player = alarmPlayer
+        } catch {
+            player = nil
+        }
+    }
+
+    func stop() {
+        player?.stop()
+        player = nil
+    }
+}
+
 /// Full-screen rollover alert. Calm but urgent — peach/coral accent, "Check on [Child]", "I've Checked".
 struct RolloverAlertView: View {
     let childName: String
@@ -76,7 +103,10 @@ struct RolloverAlertView: View {
                     .padding(.horizontal, Spacing.xl)
             }
 
-            Button(action: onDismiss) {
+            Button {
+                RolloverAlarmPlayer.shared.stop()
+                onDismiss()
+            } label: {
                 Text("I've Checked")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
@@ -97,6 +127,12 @@ struct RolloverAlertView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
+        .onAppear {
+            RolloverAlarmPlayer.shared.startLooping()
+        }
+        .onDisappear {
+            RolloverAlarmPlayer.shared.stop()
+        }
     }
 
     private var relativeTimeString: String {
