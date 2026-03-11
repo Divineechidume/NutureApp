@@ -283,14 +283,14 @@ struct SettingsView: View {
                 VStack(spacing: 0) {
                     SettingsToggleRow(icon: "bell", title: "Rollover alerts", isOn: $controller.rolloverAlertsEnabled)
                     SettingsDivider()
-                    // Test Rollover Alert: schedules a system notification after 5 seconds so you can background the app and see the banner.
+                    // Test Rollover Alert: schedule quickly so sound starts almost immediately.
                     Button {
                         let name = childrenStore.selectedChild?.name ?? "Baby"
                         notificationService.requestPermission { granted in
                             DispatchQueue.main.async {
                                 if granted {
-                                    // 5 second delay allows time to background the app so the system banner appears
-                    notificationService.sendRolloverTestNotification(after: 5, childName: name)
+                                    // Keep at 1 second because UNTimeIntervalNotificationTrigger requires >= 1s.
+                                    notificationService.sendRolloverTestNotification(after: 1, childName: name)
                                 } else {
                                     showNotificationsDeniedAlert = true
                                 }

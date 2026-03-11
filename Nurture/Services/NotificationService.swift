@@ -55,6 +55,7 @@ private enum NotificationCategory: String {
 /// - userInfo keys: "childName", "scheduledTime", "rolloverTime", "deliveryTime".
 final class NotificationService: NSObject, ObservableObject, NotificationServiceProtocol, UNUserNotificationCenterDelegate {
     static let shared = NotificationService()
+    private static let rolloverAlertSoundName = UNNotificationSoundName("rollover_alert.caf")
 
     @Published var incomingNotification: NotificationPayload?
 
@@ -103,7 +104,14 @@ final class NotificationService: NSObject, ObservableObject, NotificationService
             "notificationType": "rollover"
         ]
 
-        scheduleLocalNotification(title: "Nurture", body: "\(childName) may have changed position.", category: .rollover, after: seconds, extraUserInfo: userInfo)
+        scheduleLocalNotification(
+            title: "Nurture",
+            body: "\(childName) may have changed position.",
+            category: .rollover,
+            after: seconds,
+            sound: UNNotificationSound(named: Self.rolloverAlertSoundName),
+            extraUserInfo: userInfo
+        )
     }
 
     // Internal helper to schedule sleep prediction notification
@@ -173,7 +181,14 @@ final class NotificationService: NSObject, ObservableObject, NotificationService
     /// Placeholder for connection-lost alerts; kept for protocol conformance.
     func sendConnectionLostAlert() {
         // Non-critical placeholder notification. Implement real logic when connection monitoring is available.
-        scheduleLocalNotification(title: "Nurture", body: "Connection lost with device.", category: .rollover, after: 1.0, extraUserInfo: nil)
+        scheduleLocalNotification(
+            title: "Nurture",
+            body: "Connection lost with device.",
+            category: .rollover,
+            after: 1.0,
+            sound: UNNotificationSound(named: Self.rolloverAlertSoundName),
+            extraUserInfo: nil
+        )
     }
 
     // MARK: - UNUserNotificationCenterDelegate
@@ -195,11 +210,19 @@ final class NotificationService: NSObject, ObservableObject, NotificationService
     // MARK: - Helpers
 
     /// Schedules a local notification and merges extraUserInfo. Adds a scheduledTime entry.
-    private func scheduleLocalNotification(id: String = UUID().uuidString, title: String, body: String, category: NotificationCategory, after seconds: TimeInterval, extraUserInfo: [String: Any]? = nil) {
+    private func scheduleLocalNotification(
+        id: String = UUID().uuidString,
+        title: String,
+        body: String,
+        category: NotificationCategory,
+        after seconds: TimeInterval,
+        sound: UNNotificationSound = .default,
+        extraUserInfo: [String: Any]? = nil
+    ) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
+        content.sound = sound
 
         var info = content.userInfo
         if let extra = extraUserInfo {
